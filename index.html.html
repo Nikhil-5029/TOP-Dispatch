@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>⚡ TOP Dashboard — Kitchen Ops</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg0:#080b12;--bg1:#0d1019;--bg2:#111520;--bg3:#161b28;--bg4:#1c2130;--bg5:#222840;
+  --b0:#1e2438;--b1:#252d44;--b2:#2d3650;
+  --p:#7c6ef7;--p1:#9d93f9;--p2:#bdb5ff;--p3:rgba(124,110,247,.12);--p4:rgba(124,110,247,.06);
+  --g:#00d4a0;--g1:#00f0b5;--g2:rgba(0,212,160,.12);--g3:rgba(0,212,160,.06);
+  --a:#f5a623;--a1:#ffc04d;--a2:rgba(245,166,35,.12);--a3:rgba(245,166,35,.06);
+  --b:#4a9eff;--b1:#70b5ff;--b2:rgba(74,158,255,.12);--b3:rgba(74,158,255,.06);
+  --r:#e85d5d;--r1:#ff7b7b;--r2:rgba(232,93,93,.12);--r3:rgba(232,93,93,.06);
+  --t0:#f0f2fa;--t1:#c8ccde;--t2:#8890aa;--t3:#525872;--t4:#353a52;
+  --f:'Plus Jakarta Sans',system-ui,sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  --sw:228px;
+  --r4:6px;--r8:8px;--r12:12px;--r16:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;background:var(--bg0)}
+body{min-height:100%;background:var(--bg0);color:var(--t0);font-family:var(--f);font-size:13.5px;line-height:1.5;display:flex}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px}
+
+/* ─── SIDEBAR ─── */
+.sb{width:var(--sw);flex-shrink:0;background:var(--bg1);border-right:1px solid var(--b0);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;overflow-y:auto;z-index:100}
+.sb-top{padding:20px 16px 16px;border-bottom:1px solid var(--b0)}
+.sb-logo-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.sb-bolt{font-size:19px;color:var(--a)}
+.sb-title{font-size:17px;font-weight:800;line-height:1.15;background:linear-gradient(135deg,var(--p1),var(--b1));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sb-company{font-size:9.5px;color:var(--t3);letter-spacing:.4px;margin-top:2px}
+.sb-body{padding:10px 10px;flex:1}
+.sb-sec{margin-bottom:6px}
+.sb-sec-label{font-size:8.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--t3);padding:4px 8px;margin-bottom:2px}
+.sb-brand{background:var(--bg3);border:1px solid var(--b1);border-radius:var(--r8);padding:7px 10px;display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;cursor:pointer}
+.sb-brand-name{font-size:11.5px;font-weight:700;color:var(--a)}
+.period-toggle{display:flex;background:var(--bg2);border-radius:var(--r8);padding:3px;gap:2px;margin:0 0 10px}
+.pt-btn{flex:1;text-align:center;padding:5px 6px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:var(--t2);transition:all .15s}
+.pt-btn.on{background:var(--p);color:#fff}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7.5px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:12.5px;font-weight:500;transition:all .15s;margin-bottom:1px;user-select:none;white-space:nowrap}
+.nav-item:hover{background:var(--bg4);color:var(--t1)}
+.nav-item.on{background:var(--p3);color:var(--p1);font-weight:600}
+.nav-item .ni{width:15px;text-align:center;font-size:13px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--p);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-foot{padding:10px 10px 16px;border-top:1px solid var(--b0)}
+
+/* ─── MAIN ─── */
+.main{margin-left:var(--sw);flex:1;min-height:100vh;padding:24px 28px 48px;max-width:1400px}
+
+/* ─── PAGE HEADER ─── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px}
+.ph-left{}
+.ph-title{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;line-height:1.2}
+.ph-sub{font-size:11.5px;color:var(--t3);margin-top:4px}
+.ph-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.week-chip{background:var(--p3);border:1px solid rgba(124,110,247,.25);color:var(--p1);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px}
+.btn-refresh{background:var(--p);color:#fff;border:none;padding:8px 18px;border-radius:var(--r8);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);letter-spacing:.2px;transition:opacity .15s}
+.btn-refresh:hover{opacity:.85}
+
+/* ─── SECTION LABEL ─── */
+.slabel{font-size:8.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+
+/* ─── METRIC CARDS ─── */
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.g2x3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+
+.mc{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--r12);padding:17px 19px;position:relative;overflow:hidden;transition:border-color .2s}
+.mc:hover{border-color:var(--b1)}
+.mc-glow{border-top:2px solid var(--g)}.mc-pglow{border-top:2px solid var(--p)}.mc-aglow{border-top:2px solid var(--a)}.mc-bglow{border-top:2px solid var(--b)}.mc-rglow{border-top:2px solid var(--r)}
+.mc-gleft{border-left:2px solid var(--g);border-top:none}.mc-pleft{border-left:2px solid var(--p);border-top:none}.mc-aleft{border-left:2px solid var(--a);border-top:none}.mc-bleft{border-left:2px solid var(--b);border-top:none}.mc-rleft{border-left:2px solid var(--r);border-top:none}
+.mc-label{font-size:8.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.mc-val{font-size:30px;font-weight:800;color:var(--t0);line-height:1;margin-bottom:4px;letter-spacing:-.5px}
+.mc-val.xl{font-size:34px}.mc-val.md{font-size:22px}.mc-val.sm{font-size:18px}
+.mc-sub{font-size:10.5px;color:var(--t3);margin-bottom:4px}
+.mc-chg{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:3px}
+.up{color:var(--g)}.dn{color:var(--r)}.nu{color:var(--t3)}
+.chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;margin-top:4px}
+.chip-a{background:var(--a2);color:var(--a)}.chip-g{background:var(--g2);color:var(--g)}.chip-p{background:var(--p3);color:var(--p1)}.chip-r{background:var(--r2);color:var(--r)}.chip-b{background:var(--b2);color:var(--b)}
+
+/* ─── ALERTS ─── */
+.alert{display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:var(--r8);font-size:12px;font-weight:500;margin-bottom:14px;line-height:1.5}
+.al-r{background:var(--r2);border:1px solid rgba(232,93,93,.25);color:var(--r1)}
+.al-a{background:var(--a2);border:1px solid rgba(245,166,35,.25);color:var(--a1)}
+.al-g{background:var(--g2);border:1px solid rgba(0,212,160,.25);color:var(--g1)}
+.al-p{background:var(--p3);border:1px solid rgba(124,110,247,.25);color:var(--p1)}
+
+/* ─── BRANCH TABS ─── */
+.btabs{display:flex;gap:5px;margin-bottom:18px;flex-wrap:wrap}
+.btab{padding:5px 15px;border-radius:20px;border:1px solid var(--b1);background:transparent;color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f);transition:all .15s}
+.btab:hover{background:var(--bg4);color:var(--t1)}
+.btab.on{background:var(--p);color:#fff;border-color:var(--p)}
+
+/* ─── CHART CARDS ─── */
+.cc{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--r12);padding:18px 20px}
+.cc-title{font-size:8.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);margin-bottom:14px}
+.ch{position:relative;height:200px}
+.ch.tall{height:260px}
+.ch.short{height:140px}
+
+/* ─── TABLES ─── */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.t{width:100%;border-collapse:collapse;font-size:12px}
+table.t th{padding:7px 12px;font-size:8.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--b0);background:var(--bg2);text-align:left;white-space:nowrap}
+table.t th.tc{text-align:center}
+table.t td{padding:8px 12px;border-bottom:1px solid rgba(30,36,56,.8);color:var(--t2);vertical-align:middle}
+table.t td.tc{text-align:center}
+table.t td.tn{color:var(--t0);font-weight:600}
+table.t td.hsr{color:var(--p1);font-weight:600;text-align:center}
+table.t td.btm{color:var(--g);font-weight:600;text-align:center}
+table.t td.ind{color:var(--a);font-weight:600;text-align:center}
+table.t td.mth{color:var(--b1);font-weight:600;text-align:center}
+table.t td.tot{color:var(--t0);font-weight:800;text-align:center}
+table.t td.kg{color:var(--t0);font-weight:700;text-align:center;font-family:var(--fm);font-size:11.5px}
+table.t td.warn{color:var(--a);font-weight:700}
+table.t td.crit{color:var(--r);font-weight:700}
+table.t tr:hover td{background:var(--bg4)}
+table.t tr:last-child td{border-bottom:none}
+table.t tr.sum-row td{background:var(--p4);color:var(--t0);font-weight:700;border-top:1px solid var(--b1)}
+
+/* ─── BLOCK CARDS ─── */
+.block{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--r12);overflow:hidden;margin-bottom:12px}
+.block-hdr{padding:11px 15px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.block-title{font-size:13px;font-weight:700;color:var(--t0)}
+.block-note{font-size:11px;color:var(--t3);margin-left:auto}
+.run-badge{padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700}
+.rb-wed{background:var(--b2);color:var(--b1)}.rb-fri{background:var(--g2);color:var(--g)}.rb-sat{background:var(--p3);color:var(--p1)}.rb-mon{background:var(--b2);color:var(--b1)}.rb-thu{background:var(--a2);color:var(--a1)}.rb-pkg{background:var(--p3);color:var(--p1)}.rb-biw{background:var(--g2);color:var(--g)}
+
+/* ─── PRODUCTION SCHEDULE ─── */
+.day-block{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--r12);overflow:hidden;margin-bottom:10px}
+.day-hdr{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b0)}
+.day-name{font-size:13px;font-weight:700}
+.day-stats{display:flex;gap:14px;align-items:center}
+.day-stat{font-size:10.5px;color:var(--t3)}
+.day-stat b{color:var(--t1);font-weight:600}
+.cap-bar{height:3px;background:var(--bg5);margin:0}
+.cap-fill{height:100%;border-radius:0;transition:width .4s}
+.prod-row{display:grid;grid-template-columns:18px 1fr 80px 1fr 120px;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(30,36,56,.6)}
+.prod-row:last-child{border-bottom:none}
+.prod-row:hover{background:var(--bg4)}
+.prod-dot{width:8px;height:8px;border-radius:50%}
+.prod-name{font-size:12.5px;font-weight:600;color:var(--t0)}
+.prod-kg{font-family:var(--fm);font-size:12px;font-weight:700;text-align:center}
+.prod-note{font-size:10px}
+.prod-person{font-size:11px;color:var(--t3);text-align:right}
+.note-warn{color:var(--a);background:var(--a2);padding:1px 7px;border-radius:4px;font-weight:600}
+.note-ok{color:var(--g);background:var(--g2);padding:1px 7px;border-radius:4px}
+.note-bi{color:var(--p1);background:var(--p3);padding:1px 7px;border-radius:4px}
+.note-disp{color:var(--g);background:var(--g2);padding:1px 7px;border-radius:4px;font-weight:700}
+.note-machine{color:var(--b1);background:var(--b2);padding:1px 7px;border-radius:4px}
+.note-hand{color:var(--p1);background:var(--p3);padding:1px 7px;border-radius:4px}
+
+/* ─── PROD SUMMARY GRID ─── */
+.prod-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+
+/* ─── ROLL CARDS ─── */
+.roll-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.roll-card{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--r12);padding:13px;text-align:center;transition:border-color .2s}
+.roll-card:hover{border-color:var(--b1)}
+.roll-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.roll-sold{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:2px 0}
+.roll-sold-lbl{font-size:9.5px;color:var(--t3)}
+.roll-target{font-size:13px;font-weight:700;color:var(--t0);margin:4px 0}
+.roll-method{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block}
+.rm-m{background:var(--g2);color:var(--g)}.rm-h{background:var(--p3);color:var(--p1)}
+
+/* ─── TEMPEH BARS ─── */
+.tb-row{display:grid;grid-template-columns:200px 1fr 60px 65px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(30,36,56,.7)}
+.tb-row:last-child{border-bottom:none}
+.tb-name{font-size:12px;color:var(--t2)}
+.tb-bar{height:5px;background:var(--bg5);border-radius:3px;overflow:hidden}
+.tb-fill{height:100%;border-radius:3px}
+.tb-val{font-size:12px;font-weight:700;color:var(--t0);text-align:right;font-family:var(--fm)}
+.tb-raw{font-size:11px;color:var(--g);text-align:right;font-family:var(--fm)}
+
+/* ─── UPLOAD ─── */
+.dz{border:2px dashed var(--b1);border-radius:var(--r16);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);margin-bottom:16px}
+.dz.over{border-color:var(--p);background:var(--p3)}
+.dz.done{border-color:var(--g);background:var(--g2)}
+.dz-icon{font-size:40px;margin-bottom:10px;opacity:.8}
+.dz-title{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.dz-sub{font-size:11.5px;color:var(--t3);line-height:1.7;margin-bottom:14px}
+.dz-btn{background:var(--p);color:#fff;border:none;padding:9px 24px;border-radius:var(--r8);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);transition:opacity .15s}
+.dz-btn:hover{opacity:.85}
+.fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.fs{padding:9px 11px;border-radius:var(--r8);border:1px solid var(--b0);background:var(--bg4);transition:all .2s}
+.fs.done{border-color:rgba(0,212,160,.4);background:var(--g2)}
+.fs-name{font-size:10px;font-weight:700;color:var(--t2);margin-bottom:2px;display:flex;align-items:center;gap:5px}
+.fs.done .fs-name{color:var(--g)}
+.fs-file{font-size:9px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fs.done .fs-file{color:var(--g)}
+.gen-btn{width:100%;padding:13px;font-size:14px;font-weight:800;background:linear-gradient(135deg,var(--p),#5040c8);color:#fff;border:none;border-radius:var(--r12);cursor:pointer;font-family:var(--f);letter-spacing:.3px;transition:all .15s;margin-bottom:8px}
+.gen-btn:disabled{background:var(--bg4);color:var(--t3);cursor:not-allowed}
+.gen-btn:not(:disabled):hover{opacity:.9;transform:translateY(-1px)}
+.msg-ok{padding:10px 14px;background:var(--g2);border:1px solid rgba(0,212,160,.3);border-radius:var(--r8);font-size:12px;color:var(--g);margin-bottom:10px;font-weight:500}
+.msg-err{padding:10px 14px;background:var(--r2);border:1px solid rgba(232,93,93,.3);border-radius:var(--r8);font-size:12px;color:var(--r1);margin-bottom:10px;line-height:1.7;font-weight:500}
+
+/* ─── VIEWS ─── */
+.view{display:none}.view.on{display:block}
+
+/* ─── PACKAGING ROW ─── */
+.pkg-block{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--r12);overflow:hidden;margin-bottom:12px}
+.pkg-hdr{padding:11px 15px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:10px}
+.pkg-tag{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 10px;border-radius:10px}
+.pkg-note{font-size:11px;color:var(--t3);margin-left:auto}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ SIDEBAR ═══════════════════════════════ -->
+<nav class="sb">
+  <div class="sb-top">
+    <div class="sb-logo-row"><span class="sb-bolt">⚡</span><div class="sb-title">TOP<br>Dashboard</div></div>
+    <div class="sb-company">Rethink Future Pvt. Ltd.</div>
+  </div>
+  <div class="sb-body">
+
+    <div class="sb-sec">
+      <div class="sb-sec-label">Brand</div>
+      <div class="sb-brand"><span class="sb-brand-name">⚡ TOP (Taste of Protein)</span><span style="color:var(--t3);font-size:10px">▾</span></div>
+      <div class="sb-sec-label">Period</div>
+      <div class="period-toggle">
+        <div class="pt-btn on" onclick="setPeriod(this,'w')">Weekly</div>
+        <div class="pt-btn" onclick="setPeriod(this,'m')">Monthly</div>
+      </div>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-sec-label">Views</div>
+      <div class="nav-item on" onclick="go('upload',this)"><span class="ni">⬆</span> Upload Data</div>
+      <div class="nav-item" onclick="go('overview',this)"><span class="ni">📊</span> Overview</div>
+      <div class="nav-item" onclick="go('yesterday',this)"><span class="ni">📅</span> Yesterday</div>
+      <div class="nav-item" onclick="go('production',this)"><span class="ni">🏭</span> Production</div>
+      <div class="nav-item" onclick="go('dispatch',this)"><span class="ni">🚚</span> Dispatch</div>
+      <div class="nav-item" onclick="go('bread',this)"><span class="ni">🥖</span> Bread Order</div>
+      <div class="nav-item" onclick="go('packaging',this)"><span class="ni">📦</span> Packaging</div>
+      <div class="nav-item" onclick="go('tempeh',this)"><span class="ni">🌿</span> Tempeh</div>
+      <div class="nav-item" onclick="go('intelligence',this)"><span class="ni">🏆</span> Intelligence</div>
+    </div>
+
+    <div class="sb-foot">
+      <div class="sb-sec-label">Actions</div>
+      <div class="nav-item" onclick="go('upload',null)"><span class="ni">📂</span> Load New Data</div>
+      <div class="nav-item"><span class="ni">💡</span> AI Insights</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════ MAIN ═══════════════════════════════════ -->
+<main class="main">
+
+<!-- ─── UPLOAD ─── -->
+<div id="v-upload" class="view on">
+  <div class="ph">
+    <div><div class="ph-title">⬆ Load Weekly Data</div><div class="ph-sub">Upload your 8 XLSX files — all schedules auto-generate from actual sales</div></div>
+  </div>
+  <div class="dz" id="dz" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)">
+    <div class="dz-icon">📊</div>
+    <div class="dz-title">Drag & drop all 8 XLSX files here</div>
+    <div class="dz-sub">4 × Item Wise Report + 4 × Addon Report (one per branch)<br>HSR · BTM · IND · MTH — auto-detected from Restaurant Name inside file</div>
+    <button class="dz-btn" onclick="document.getElementById('fi').click();event.stopPropagation()">Browse Files</button>
+    <input type="file" id="fi" multiple accept=".xlsx,.xls" style="display:none" onchange="handleInput(event)">
+  </div>
+  <div class="fgrid" id="fgrid"></div>
+  <div id="msg-area"></div>
+  <button class="gen-btn" id="genbtn" disabled onclick="runGenerate()">⚡ Generate All Schedules</button>
+  <div style="text-align:center;font-size:11px;color:var(--t3);margin-top:6px" id="fcnt">0 / 8 files loaded</div>
+
+  <div class="g2" style="margin-top:24px">
+    <div class="cc">
+      <div class="cc-title">How it works</div>
+      <div style="font-size:12px;color:var(--t2);line-height:2.1">
+        <div>1️⃣ &nbsp;Every Saturday — export 4 Item Wise + 4 Addon reports</div>
+        <div>2️⃣ &nbsp;Drop all 8 files here — branch auto-detected from file content</div>
+        <div>3️⃣ &nbsp;Click Generate — schedules build in seconds from your actual data</div>
+        <div>4️⃣ &nbsp;Review Production, Dispatch, Bread, Packaging tabs</div>
+        <div>5️⃣ &nbsp;Share page URL with your factory team on GitHub Pages</div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cc-title">Rules applied automatically</div>
+      <div style="font-size:12px;color:var(--t2);line-height:2.1">
+        <div>• Water loss 15% · Safety buffer 30% on all quantities</div>
+        <div>• Machine (Pushkar + Vikas): max 300 rolls + 450 roti / day</div>
+        <div>• Hand (Suneel / H1): max 120 Spinach + Beetroot / day</div>
+        <div>• Jeera Rice: <b>never</b> same day as Keema / Paneer / Tempeh items</div>
+        <div>• IND expanding QSR: 1.5× planned quantities</div>
+        <div>• Items &gt; 50 kg: 1 full person + 1 half person assigned</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── OVERVIEW ─── -->
+<div id="v-overview" class="view">
+  <div class="ph">
+    <div><div class="ph-title">📊 Overview</div><div class="ph-sub" id="ov-sub">All brands · All locations · All platforms · Weekly view</div></div>
+    <div class="ph-right"><div class="week-chip" id="wchip" style="display:none"></div><button class="btn-refresh">⚡ Refresh</button></div>
+  </div>
+  <div class="slabel">Portfolio Summary</div>
+  <div class="g5">
+    <div class="mc mc-glow"><div class="mc-label">Total GMV</div><div class="mc-val" id="ov-gmv">₹22.5L</div><div class="mc-chg up" id="ov-gmvchg">▲ 12.7% WoW</div></div>
+    <div class="mc mc-pglow"><div class="mc-label">Net Payout</div><div class="mc-val" id="ov-pay">₹9.6L</div><div class="mc-sub">Cash from platforms</div></div>
+    <div class="mc mc-bglow"><div class="mc-label">Total Orders</div><div class="mc-val" id="ov-ord">6,095</div><div class="mc-chg up" id="ov-ordchg">▲ 12.4% WoW</div></div>
+    <div class="mc mc-aglow"><div class="mc-label">Payout / Net Sales</div><div class="mc-val" id="ov-net">54.2%</div><div class="mc-sub">After deductions</div></div>
+    <div class="mc mc-rglow"><div class="mc-label">Discount % GMV</div><div class="mc-val" id="ov-disc">21.1%</div><div class="chip chip-a" style="margin-top:6px">Monitor</div></div>
+  </div>
+  <div class="slabel">Branch Breakdown</div>
+  <div class="g2">
+    <div class="cc"><div class="cc-title">GMV by Branch (₹L)</div><div class="ch"><canvas id="ch-gmv"></canvas></div></div>
+    <div class="cc"><div class="cc-title">Orders by Branch</div><div class="ch"><canvas id="ch-ord"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-title">Week-on-Week Orders Trend</div><div class="ch tall"><canvas id="ch-wow"></canvas></div></div>
+    <div class="cc"><div class="cc-title">Top Items by Volume (All Branches)</div><div class="ch tall"><canvas id="ch-items"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ─── YESTERDAY ─── -->
+<div id="v-yesterday" class="view">
+  <div class="ph">
+    <div><div class="ph-title">📅 Yesterday at a Glance</div><div class="ph-sub" id="yd-sub">Saturday 2026-03-21 — comparing to Last Saturday (14 Mar)</div></div>
+    <div class="ph-right"><span style="font-size:11px;color:var(--t3)">Updated: 12:39:57</span><button class="btn-refresh">⚡ Refresh</button></div>
+  </div>
+  <div class="btabs">
+    <div class="btab on" onclick="btab(this)">All Locations</div>
+    <div class="btab" onclick="btab(this)">HSR</div>
+    <div class="btab" onclick="btab(this)">BTM</div>
+    <div class="btab" onclick="btab(this)">Indiranagar</div>
+    <div class="btab" onclick="btab(this)">Marathahalli</div>
+  </div>
+  <div class="alert al-r">⚠ &nbsp;1 Zomato cancellation(s) yesterday — verify reason</div>
+  <div class="g4">
+    <div class="mc mc-gleft"><div class="mc-label">Revenue Yesterday</div><div class="mc-val xl">₹83,807</div><div class="mc-sub">vs day before</div><div class="mc-chg up">▲ +17.6% vs prior period</div></div>
+    <div class="mc mc-pleft"><div class="mc-label">Orders</div><div class="mc-val xl">300</div><div class="mc-chg up">▲ +12.4% vs prior period</div></div>
+    <div class="mc mc-bleft"><div class="mc-label">AOV</div><div class="mc-val xl">₹279</div><div class="mc-chg up">▲ +4.7% vs prior period</div></div>
+    <div class="mc mc-aleft"><div class="mc-label">Discount Rate</div><div class="mc-val xl">21.6%</div><div class="mc-sub">of MRP given as discount</div><div class="chip chip-a">Monitor</div></div>
+  </div>
+  <div class="g2x3">
+    <div class="mc"><div class="mc-label">Bev Attach Yesterday</div><div class="mc-val md">22.7%</div><div class="mc-sub">orders with a beverage</div></div>
+    <div class="mc"><div class="mc-label">Multi-Item Orders</div><div class="mc-val md">26.0%</div><div class="mc-sub">orders with 2+ items</div></div>
+    <div class="mc"><div class="mc-label">New Customers</div><div class="mc-val md">119</div><div class="mc-sub">first order ever</div></div>
+    <div class="mc"><div class="mc-label">Repeat Customers</div><div class="mc-val md">77</div><div class="mc-sub">returning this week</div></div>
+    <div class="mc"><div class="mc-label">Cancellations</div><div class="mc-val md" style="color:var(--r)">2</div><div class="mc-sub">verify on Zomato</div></div>
+    <div class="mc"><div class="mc-label">Avg Prep Time</div><div class="mc-val md">18 min</div><div class="mc-sub">target &lt;20 min ✓</div></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-title">Orders by Hour</div><div class="ch"><canvas id="ch-hr"></canvas></div></div>
+    <div class="cc"><div class="cc-title">Revenue by Branch</div><div class="ch"><canvas id="ch-br2"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ─── PRODUCTION ─── -->
+<div id="v-production" class="view">
+  <div class="ph">
+    <div><div class="ph-title">🏭 Production Schedule</div><div class="ph-sub" id="prod-sub">Week — from actual sales data + 30% buffer</div></div>
+  </div>
+  <div class="prod-overview" id="prod-summary">
+    <div class="mc mc-pleft"><div class="mc-label">Total Cooking KG</div><div class="mc-val md" id="ps-kg">—</div></div>
+    <div class="mc mc-gleft"><div class="mc-label">Tempeh Required</div><div class="mc-val md" id="ps-temp">—</div></div>
+    <div class="mc mc-aleft"><div class="mc-label">Peak Day</div><div class="mc-val md" id="ps-peak">Monday</div></div>
+    <div class="mc mc-bleft"><div class="mc-label">People on Peak</div><div class="mc-val md">4</div></div>
+  </div>
+  <div id="prod-alerts"></div>
+
+  <!-- PERSON LOAD SUMMARY -->
+  <div class="cc" style="margin-bottom:16px" id="person-load-card">
+    <div class="cc-title">Weekly Person Load Overview</div>
+    <div class="tw"><table class="t" id="person-load-table">
+      <thead><tr><th>Person</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th class="tc">Total KG</th><th class="tc">Role</th></tr></thead>
+      <tbody id="plbody"></tbody>
+    </table></div>
+  </div>
+
+  <div id="prod-days"></div>
+</div>
+
+<!-- ─── DISPATCH ─── -->
+<div id="v-dispatch" class="view">
+  <div class="ph">
+    <div><div class="ph-title">🚚 Dispatch Plan</div><div class="ph-sub">3 runs per week · calculated from actual sales by branch</div></div>
+  </div>
+  <div class="g3" style="margin-bottom:20px">
+    <div class="mc mc-bleft"><div class="mc-label">Wednesday AM</div><div class="mc-val sm">Major Items</div><div class="mc-sub">Keema · Paneer · Peri Peri · Tofu</div><div class="mc-sub">3–4 days coverage each branch</div></div>
+    <div class="mc mc-gleft"><div class="mc-label">Friday AM</div><div class="mc-val sm">Jeera Rice + Top-up</div><div class="mc-sub">After Thursday production</div><div class="mc-sub">+ any low-stock replenishment</div></div>
+    <div class="mc mc-pleft"><div class="mc-label">Saturday PM</div><div class="mc-val sm">ALL Items</div><div class="mc-sub">Small packs cover 2 weeks</div><div class="mc-sub">Bi-weekly items ship here</div></div>
+  </div>
+  <div id="disp-tables">
+    <div class="alert al-a">⬆ Upload sales data first to generate dispatch quantities.</div>
+  </div>
+</div>
+
+<!-- ─── BREAD ORDER ─── -->
+<div id="v-bread" class="view">
+  <div class="ph">
+    <div><div class="ph-title">🥖 Bread Order Management</div><div class="ph-sub">Monday + Thursday orders · calculated from actual sales data</div></div>
+  </div>
+  <div class="slabel">Weekly Roll Targets (from Variation column · +30% buffer)</div>
+  <div class="roll-row" id="roll-summary">
+    <div class="roll-card"><div class="roll-label">Whole Wheat</div><div class="roll-sold" style="color:var(--p1)" id="rs-ww">—</div><div class="roll-sold-lbl">sold last week</div><div class="roll-target" id="rt-ww">— needed</div><div class="roll-method rm-m">⚙ Machine · max 300/day</div></div>
+    <div class="roll-card"><div class="roll-label">Multigrain</div><div class="roll-sold" style="color:var(--b1)" id="rs-mg">—</div><div class="roll-sold-lbl">sold last week</div><div class="roll-target" id="rt-mg">— needed</div><div class="roll-method rm-m">⚙ Machine · max 300/day</div></div>
+    <div class="roll-card"><div class="roll-label">Roti / Tawa</div><div class="roll-sold" style="color:var(--a)" id="rs-rt">—</div><div class="roll-sold-lbl">sold last week</div><div class="roll-target" id="rt-rt">— needed</div><div class="roll-method rm-m">⚙ Machine · max 450/day</div></div>
+    <div class="roll-card"><div class="roll-label">Spinach</div><div class="roll-sold" style="color:var(--g)" id="rs-sp">—</div><div class="roll-sold-lbl">sold last week</div><div class="roll-target" id="rt-sp">— needed</div><div class="roll-method rm-h">🤲 Hand · max 120/day</div></div>
+    <div class="roll-card"><div class="roll-label">Beetroot</div><div class="roll-sold" style="color:var(--r1)" id="rs-bt">—</div><div class="roll-sold-lbl">sold last week</div><div class="roll-target" id="rt-bt">— needed</div><div class="roll-method rm-h">🤲 Hand · max 120/day</div></div>
+  </div>
+  <div id="bread-tables">
+    <div class="alert al-a">⬆ Upload sales data to generate bread orders.</div>
+  </div>
+</div>
+
+<!-- ─── PACKAGING ─── -->
+<div id="v-packaging" class="view">
+  <div class="ph">
+    <div><div class="ph-title">📦 Packaging Schedule</div><div class="ph-sub">Packet counts per filling · weekly + bi-weekly · based on production KG</div></div>
+  </div>
+  <div id="pkg-tables">
+    <div class="alert al-a">⬆ Upload sales data to generate packaging schedule.</div>
+  </div>
+</div>
+
+<!-- ─── TEMPEH ─── -->
+<div id="v-tempeh" class="view">
+  <div class="ph">
+    <div><div class="ph-title">🌿 Tempeh Tracker</div><div class="ph-sub">35% raw tempeh per KG produced · H1 capacity 25 kg/person/day</div></div>
+  </div>
+  <div class="g3">
+    <div class="mc mc-gleft"><div class="mc-label">Total Raw Tempeh</div><div class="mc-val xl" style="color:var(--g)" id="t-total">—</div><div class="mc-sub">Required this week</div></div>
+    <div class="mc mc-bleft"><div class="mc-label">Daily Average</div><div class="mc-val md" id="t-daily">—</div><div class="mc-sub">vs 25 kg/day capacity</div></div>
+    <div class="mc mc-pleft"><div class="mc-label">Spare Capacity / Day</div><div class="mc-val md" id="t-spare">—</div><div class="mc-sub">Available for other tasks</div></div>
+  </div>
+  <div class="cc" style="margin-bottom:16px">
+    <div class="cc-title">Raw Tempeh by Product</div>
+    <div id="tbars" style="padding-top:6px"></div>
+  </div>
+  <div class="cc">
+    <div class="cc-title">Daily Tempeh Production Schedule (H1)</div>
+    <div class="ch short"><canvas id="ch-temp"></canvas></div>
+  </div>
+</div>
+
+<!-- ─── INTELLIGENCE ─── -->
+<div id="v-intelligence" class="view">
+  <div class="ph">
+    <div><div class="ph-title">🏆 TOP Intelligence</div><div class="ph-sub">Insights from uploaded sales data</div></div>
+  </div>
+  <div id="intel-body">
+    <div class="alert al-a">⬆ Upload sales data to generate intelligence insights.</div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const S = { files:{}, res:null, rolls:{WW:0,MG:0,Spinach:0,Beetroot:0,Roti:0} };
+const BR = ['HSR','BTM','IND','MTH'];
+const BC = {HSR:'#7c6ef7',BTM:'#00d4a0',IND:'#f5a623',MTH:'#4a9eff'};
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+
+Chart.defaults.color = '#525872';
+Chart.defaults.font.family = "'Plus Jakarta Sans',system-ui";
+Chart.defaults.font.size = 11;
+
+// ════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════
+function go(id, el) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  $('v-'+id).classList.add('on');
+  if(el) el.classList.add('on');
+  if(id==='overview') initOverview();
+  if(id==='yesterday') initYesterday();
+  if(id==='tempeh' && S.res) initTempehChart();
+}
+function setPeriod(el) { document.querySelectorAll('.pt-btn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); }
+function btab(el) { document.querySelectorAll('.btab').forEach(b=>b.classList.remove('on')); el.classList.add('on'); }
+
+// ════════════════════════════════════════════════════════════
+//  XLSX PARSER (inlineStr-aware)
+// ════════════════════════════════════════════════════════════
+function parseXLSX(buf) {
+  const raw = new TextDecoder('utf-8',{fatal:false}).decode(new Uint8Array(buf));
+  const ss=[];
+  const sm = raw.match(/<sst[^>]*>([\s\S]*?)<\/sst>/);
+  if(sm) for(const m of sm[1].matchAll(/<si>([\s\S]*?)<\/si>/g)){
+    let t=''; for(const x of m[1].matchAll(/<t[^>]*>([^<]*)<\/t>/g)) t+=x[1];
+    ss.push(t.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#x0D;/g,'').trim());
+  }
+  const s1 = raw.match(/sheet1\.xml[^P]*?(<worksheet[\s\S]*?<\/worksheet>)/) || raw.match(/(<sheetData[\s\S]*?<\/sheetData>)/);
+  if(!s1) return null;
+  const rows={};
+  for(const rm of s1[1].matchAll(/<row\s[^>]*r="(\d+)"[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g)){
+    const ri=parseInt(rm[1])-1, rc=rm[2]||'', cells={};
+    for(const cm of rc.matchAll(/<c\s([^>]*)>([\s\S]*?)<\/c>/g)){
+      const at=cm[1],co=cm[2],ra=at.match(/r="([A-Z]+)\d+"/); if(!ra) continue;
+      const col = ra[1].split('').reduce((a,c)=>a*26+c.charCodeAt(0)-64,0)-1;
+      const ct = (at.match(/\bt="([^"]+)"/)||[])[1]||'n';
+      let v=null;
+      if(ct==='inlineStr'){let t='';for(const x of co.matchAll(/<t[^>]*>([^<]*)<\/t>/g))t+=x[1];v=t.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#x0D;/g,'').trim();}
+      else if(ct==='s'){const m2=co.match(/<v>([^<]*)<\/v>/);if(m2)v=ss[parseInt(m2[1])]??'';}
+      else{const m2=co.match(/<v>([^<]*)<\/v>/);if(m2){const n=parseFloat(m2[1]);v=isNaN(n)?m2[1]:n;}}
+      if(v!==null&&v!=='') cells[col]=v;
+    }
+    if(Object.keys(cells).length) rows[ri]=cells;
+  }
+  if(!Object.keys(rows).length) return null;
+  const mr=Math.max(...Object.keys(rows).map(Number)),res=[];
+  for(let i=0;i<=mr;i++){const c=rows[i];if(!c){res.push(null);continue;}const mc=Math.max(...Object.keys(c).map(Number));res.push(Array.from({length:mc+1},(_,j)=>c[j]??null));}
+  return res;
+}
+
+function detectBT(rows,fn){
+  const combined=(rows||[]).slice(0,10).map(r=>(r||[]).filter(c=>c!=null).join(' ')).join(' ').toLowerCase();
+  let branch=null,type='ITEM';
+  if(combined.includes('(hsr)')||combined.includes('hsr)')) branch='HSR';
+  else if(combined.includes('(btm)')||combined.includes('btm)')) branch='BTM';
+  else if(combined.includes('indiranagar')) branch='IND';
+  else if(combined.includes('(mth)')||combined.includes('mth)')||combined.includes('marathahalli')) branch='MTH';
+  if(combined.includes('addon')) type='ADDON';
+  if(!branch){const f=(fn||'').toLowerCase();if(f.startsWith('hsr')||f.includes('_hsr'))branch='HSR';else if(f.startsWith('btm')||f.includes('_btm'))branch='BTM';else if(f.includes('indiranagar')||f.includes('_ind'))branch='IND';else if(f.startsWith('mth')||f.includes('_mth'))branch='MTH';}
+  if(type==='ITEM'&&(fn||'').toLowerCase().includes('addon'))type='ADDON';
+  return{branch,type};
+}
+
+const VMAP={'whole wheat wrap':'WW','whole wheat':'WW','multigrain wrap - high protein':'MG','multigrain wrap':'MG','multigrain':'MG','spinach wrap - chef special':'Spinach','spinach wrap':'Spinach','beatroot wrap - super healthy':'Beetroot','beetroot wrap - super healthy':'Beetroot','beetroot wrap':'Beetroot','beetroot':'Beetroot','roti':'Roti','tawa roti':'Roti'};
+function detectWrap(v,n){const vl=(v||'').toLowerCase(),nl=(n||'').toLowerCase();for(const[k,t]of Object.entries(VMAP))if(vl.includes(k))return t;if(nl.includes('spinach'))return'Spinach';if(nl.includes('beetroot')||nl.includes('beatroot'))return'Beetroot';if(nl.includes('multigrain'))return'MG';if(nl.includes('whole wheat'))return'WW';if(nl.includes('roti'))return'Roti';return null;}
+
+function extractItems(rows){
+  let hdr=-1,dr='';
+  for(let i=0;i<(rows||[]).length;i++){const r=rows[i];if(!r)continue;const fl=r.filter(Boolean).join('|'),lo=fl.toLowerCase();if(lo.includes('date:')&&r[1])dr=String(r[1]);if(String(r[0]||'').trim()==='Date'&&lo.includes('item name')){hdr=i;break;}}
+  if(hdr===-1)for(let i=0;i<(rows||[]).length;i++)if((rows[i]||[]).some(c=>String(c||'').trim()==='Item Name')){hdr=i;break;}
+  const items={},wc={WW:0,MG:0,Spinach:0,Beetroot:0,Roti:0},skip=['total','item name','min.','max.','avg.'];
+  for(let i=hdr+2;i<(rows||[]).length;i++){const r=rows[i];if(!r||r.length<6)continue;
+    const name=String(r[3]||'').trim(),qty=parseFloat(r[5]||0),variation=String(r[13]!=null?r[13]:(r[14]!=null?r[14]:'')).trim();
+    if(!name||qty<=0||skip.includes(name.toLowerCase()))continue;
+    items[name]=(items[name]||0)+qty;
+    const wt=detectWrap(variation,name);
+    if(wt&&wt in wc)wc[wt]+=qty;
+    if(!wt&&(name.toLowerCase().includes('thali')||name.toLowerCase().includes('55 gram')))wc.Roti+=qty*2;
+  }
+  return{items,dateRange:dr,wc};
+}
+
+function extractAddons(rows){
+  let hdr=-1;for(let i=0;i<(rows||[]).length;i++)if((rows[i]||[]).some(c=>String(c||'').trim()==='Addon Group')){hdr=i;break;}
+  const out={};let cur='';
+  for(let i=hdr+2;i<(rows||[]).length;i++){const r=rows[i];if(!r||!r.some(c=>c!=null))continue;const g=String(r[0]||'').trim();if(g&&!['Sub Total','Total','Min.','Max.','Avg.'].includes(g))cur=g;const a=String(r[1]||'').trim(),q=parseFloat(r[3]||0);if(a&&q){const k=`${cur}|||${a}`;out[k]=(out[k]||0)+q;}}
+  return out;
+}
+
+// ════════════════════════════════════════════════════════════
+//  FILE HANDLING
+// ════════════════════════════════════════════════════════════
+const SLOTS=[
+  {id:'HSR_ITEM',l:'HSR Item Wise',b:'HSR',c:'#7c6ef7'},{id:'BTM_ITEM',l:'BTM Item Wise',b:'BTM',c:'#00d4a0'},
+  {id:'IND_ITEM',l:'IND Item Wise',b:'IND',c:'#f5a623'},{id:'MTH_ITEM',l:'MTH Item Wise',b:'MTH',c:'#4a9eff'},
+  {id:'HSR_ADDON',l:'HSR Addon',b:'HSR',c:'#7c6ef7'},{id:'BTM_ADDON',l:'BTM Addon',b:'BTM',c:'#00d4a0'},
+  {id:'IND_ADDON',l:'IND Addon',b:'IND',c:'#f5a623'},{id:'MTH_ADDON',l:'MTH Addon',b:'MTH',c:'#4a9eff'},
+];
+
+renderFGrid();
+function renderFGrid(){
+  $('fgrid').innerHTML=SLOTS.map(s=>{const f=S.files[s.id];return`<div class="fs ${f?'done':''}"><div class="fs-name"><span style="width:7px;height:7px;border-radius:50%;background:${f?'var(--g)':s.c};display:inline-block;flex-shrink:0"></span>${s.l}</div><div class="fs-file">${f?'✓ '+f.name:'—'}</div></div>`;}).join('');
+  const n=Object.keys(S.files).length;
+  $('genbtn').disabled=n===0;
+  $('genbtn').textContent=`⚡ Generate All Schedules  (${n} / 8 files loaded)`;
+  $('fcnt').textContent=`${n} / 8 files loaded`;
+}
+function showMsg(txt,err){$('msg-area').innerHTML=txt?`<div class="${err?'msg-err':'msg-ok'}">${txt}</div>`:'';}
+async function handleFiles(fl){
+  for(const f of Array.from(fl)){
+    if(!f.name.match(/\.(xlsx|xls)$/i))continue;
+    try{
+      const buf=await f.arrayBuffer(),rows=parseXLSX(buf);
+      if(!rows||!rows.length)throw new Error('Cannot parse file');
+      const{branch,type}=detectBT(rows,f.name);
+      if(!branch)throw new Error(`Cannot detect branch. File needs (HSR), (BTM), (MTH) or Indiranagar in the Restaurant Name row.`);
+      const parsed=type==='ADDON'?{addons:extractAddons(rows)}:extractItems(rows);
+      S.files[`${branch}_${type}`]={name:f.name,branch,type,parsed};
+      showMsg(`✓ ${f.name} → ${branch} ${type}`,false);
+    }catch(e){showMsg(`✗ ${f.name}: ${e.message}`,true);}
+    renderFGrid();
+  }
+}
+function handleInput(e){handleFiles(e.target.files);e.target.value='';}
+const dz=$('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+function onDrop(e){e.preventDefault();dz.classList.remove('over');handleFiles(e.dataTransfer.files);}
+function onDragOver(e){e.preventDefault();dz.classList.add('over');}
+function onDragLeave(){dz.classList.remove('over');}
+
+// ════════════════════════════════════════════════════════════
+//  SCHEDULE CALCULATOR
+// ════════════════════════════════════════════════════════════
+function buf(g){ return Math.round(g*1.30/1000*10)/10; } // grams → KG with 30% buffer
+
+function calcFillingsKg(bd){
+  const tot={};
+  function add(k,g){ tot[k]=(tot[k]||0)+g; }
+  for(const[br,{items}]of Object.entries(bd)){
+    const mx = br==='IND'?1.5:1;
+    for(const[name,qty]of Object.entries(items)){
+      const n=name.toLowerCase();
+      const half=n.includes('(half')||n.includes('5 inch')||n.includes('sandwich (half')||n.includes('sandiwch (half');
+      const full=n.includes('(full')||n.includes('10 inch');
+      const roll=n.includes('roll')||n.includes('wrap');
+      const bowl=n.includes('meal bowl')||n.includes('rice meal bowl');
+      const thali=n.includes('thali');
+      const classic=n.includes('classic sandwich');
+      const mini=n.includes('mini roll');
+      const g = half?80:full?150:roll||mini?100:bowl?175:thali?175:classic?60:80;
+
+      if(n.includes('smokey paneer makhni')||n.includes('smoky paneer makhni')||n.includes('paneer makhni')||n.includes('paneer makhani')||n.includes('creamy paneer makhni')){add('Paneer Filling',qty*mx*g);}
+      else if(n.includes('paneer bhurji')){add('Paneer Bhurji',qty*mx*g);}
+      else if(n.includes('lehsuni paneer')||n.includes('paneer delight')||(n.includes('smokey paneer')&&!n.includes('makhni')&&!n.includes('makhani'))){add('Lehsuni Paneer',qty*mx*(half?80:full?150:roll?100:80));}
+      else if(n.includes('keema')){add('Tempeh Keema',qty*mx*g);if(bowl||thali)add('Jeera Rice',qty*mx*250);}
+      else if(n.includes('peri peri')||n.includes('peri-peri')||n.includes('smoky spice')){add('Peri Peri Tempeh',qty*mx*g);}
+      else if(n.includes('tofu tikka')||n.includes('tofu signature')||n.includes('herbed tofu')||n.includes('mighty tofu')||n.includes('garlic tofu crunch')||n.includes('desi tofu')){add('Tofu Filling',qty*mx*g);}
+      else if(n.includes('tandoori tempeh lehsuni')||n.includes('tempeh lehsuni')){add('Tempeh Lehsuni',qty*mx*g);}
+      else if((n.includes('tandoori tempeh')&&!n.includes('lehsuni'))||n.includes('tandoori patty')){add('Tandoori Patty',qty*mx*80);}
+      else if(n.includes('tempeh bhurji')){add('Tempeh Bhurji',qty*mx*g);}
+      else if(n.includes('desi chinese')||n.includes('kung pao')||n.includes('chilli tempeh')){add('Kung Pao',qty*mx*175);add('Fried Rice',qty*mx*250);}
+      else if(n.includes('ghee roast')){add('Ghee Roast',qty*mx*g);if(bowl||thali)add('Jeera Rice',qty*mx*250);}
+      else if(n.includes('meaty masala')||n.includes('spicy grill')||n.includes('masala tikka')){add('Masala Tikka',qty*mx*g);}
+      else if(n.includes('red bean tempeh')||n.includes('smoky red bean')){add('Rajma Tempeh Patty',qty*mx*80);}
+      else if(n.includes('mexican grilled cheese')||n.includes('grilled cheese burger')){add('Rajma Patty',qty*mx*80);}
+      else if(n.includes('corn n cheese')||n.includes('crispy corn')){add('Corn Patty',qty*mx*80);}
+      else if(n.includes('chickpea')){add('Chickpea Tempeh Patty',qty*mx*80);}
+      else if(n.includes('burrito bowl')||n.includes('mexican herbed')||n.includes('peri peri tempeh burrito')||n.includes('mexican paneer')){add('Burrito Bowl',qty*mx*100);add('Jeera Rice',qty*mx*150);}
+      if(bowl||thali) add('Jeera Rice',qty*mx*250);
+    }
+  }
+  // Add momos extra filling
+  tot['Tempeh Keema']=(tot['Tempeh Keema']||0)+3000;
+  tot['Peri Peri Tempeh']=(tot['Peri Peri Tempeh']||0)+3000;
+  // Convert to KG
+  const res={};
+  for(const[k,g]of Object.entries(tot)) res[k]=Math.max(0.5,buf(g));
+  // Fixed weekly
+  res['Peri Peri Sauce']=Math.round((res['Peri Peri Tempeh']||27)/4*10)/10;
+  res['Makhani Sauce']=30;
+  res['House Sauce']=50;
+  res['Jeera Rice']=Math.max(res['Jeera Rice']||0,20);
+  return res;
+}
+
+function runGenerate(){
+  const bd={};let week='';
+  for(const[,f]of Object.entries(S.files)){
+    const br=f.branch;
+    if(!bd[br])bd[br]={items:{},wc:{WW:0,MG:0,Spinach:0,Beetroot:0,Roti:0},orders:0};
+    if(f.type==='ITEM'){
+      for(const[k,v]of Object.entries(f.parsed.items||{}))bd[br].items[k]=(bd[br].items[k]||0)+v;
+      if(f.parsed.dateRange)week=f.parsed.dateRange;
+      for(const[k,v]of Object.entries(f.parsed.wc||{}))bd[br].wc[k]=(bd[br].wc[k]||0)+v;
+      bd[br].orders=Object.values(bd[br].items).reduce((a,b)=>a+b,0);
+    }
+  }
+  const rt={WW:0,MG:0,Spinach:0,Beetroot:0,Roti:0};
+  for(const br of BR)if(bd[br])for(const[k,v]of Object.entries(bd[br].wc))rt[k]=(rt[k]||0)+v;
+  S.rolls=rt;
+  const fk=calcFillingsKg(bd);
+  S.res={week,bd,fk,rt};
+
+  renderAll();
+  showMsg(`✓ Schedules generated from ${Object.keys(bd).join(', ')}  (week: ${week||'—'})`,false);
+  go('overview',document.querySelectorAll('.nav-item')[1]);
+}
+
+function renderAll(){
+  const r=S.res;if(!r)return;
+  // Week badge
+  if(r.week){$('wchip').textContent=r.week;$('wchip').style.display='';$('ov-sub').textContent=`All branches · ${r.week}`;}
+  const total=BR.reduce((s,b)=>s+(r.bd[b]?.orders||0),0);
+  $('ov-ord').textContent=total.toLocaleString();
+  renderProduction();
+  renderDispatch();
+  renderBread();
+  renderPackaging();
+  renderTempeh();
+  renderIntelligence();
+  updateRollSummary();
+}
+
+// ════════════════════════════════════════════════════════════
+//  PRODUCTION
+// ════════════════════════════════════════════════════════════
+const PCOL={
+  'Tempeh Keema':'#7c6ef7','Peri Peri Tempeh':'#9d93f9','Tofu Filling':'#4a9eff',
+  'Paneer Filling':'#00d4a0','Jeera Rice':'#f5a623','Lehsuni Paneer':'#00c9b8',
+  'Paneer Bhurji':'#4a9eff','House Sauce':'#e85d5d','Makhani Sauce':'#ff7b7b',
+  'Tandoori Patty':'#f5a623','Peri Peri Sauce':'#9d93f9','Tempeh Bhurji':'#7c6ef7',
+  'Tempeh Lehsuni':'#9d93f9','Ghee Roast':'#f5a623','Masala Tikka':'#e85d5d',
+  'Kung Pao':'#4a9eff','Fried Rice':'#00d4a0','Burrito Bowl':'#7c6ef7','Raw Tempeh':'#00d4a0',
+};
+const TEMPEH_ITEMS=['Tempeh Keema','Peri Peri Tempeh','Kung Pao','Ghee Roast','Tempeh Lehsuni','Tandoori Patty','Masala Tikka','Tempeh Bhurji','Rajma Tempeh Patty','Chickpea Tempeh Patty'];
+function tempehReq(fk){return TEMPEH_ITEMS.reduce((s,k)=>s+(fk[k]||0)*0.35,0);}
+
+function renderProduction(){
+  const fk=S.res.fk;
+  const tr=tempehReq(fk);
+  const totalKg=Object.values(fk).reduce((a,b)=>a+b,0);
+  $('ps-kg').textContent=totalKg.toFixed(0)+' kg';
+  $('ps-temp').textContent=tr.toFixed(1)+' kg';
+
+  const schedule={
+    Mon:{color:'#4a9eff',label:'Monday',note:'Keema + Peri Peri + Tempeh making',items:[
+      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:'Tempeh Keema',kg:fk['Tempeh Keema']||56,person:'Shubash + Suneel',note:(fk['Tempeh Keema']||56)>50?'warn-50kg':'',dot:PCOL['Tempeh Keema']},
+      {name:'Peri Peri Tempeh (part)',kg:Math.min(fk['Peri Peri Tempeh']||27,18),person:'H1 after tempeh',note:'H1 10kg slot',dot:PCOL['Peri Peri Tempeh']},
+      {name:'Peri Peri Sauce',kg:fk['Peri Peri Sauce']||7,person:'H1 spare',note:'1kg per 4kg product',dot:PCOL['Peri Peri Sauce']},
+      {name:'⚙ WW + MG Rolls',kg:0,qty:'75 + 30 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
+      {name:'⚙ Roti',kg:0,qty:'50 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
+    ]},
+    Tue:{color:'#7c6ef7',label:'Tuesday',note:'Tofu + House Sauce + Patty + Momos',items:[
+      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:'Peri Peri Tempeh (finish)',kg:Math.max(0,(fk['Peri Peri Tempeh']||27)-18),person:'Shubash',note:'Mon carryover',dot:PCOL['Peri Peri Tempeh']},
+      {name:'Tofu Filling',kg:fk['Tofu Filling']||28,person:'Suneel',note:'',dot:PCOL['Tofu Filling']},
+      {name:'House Sauce',kg:50,person:'Shubash + Suneel',note:'warn-50kg',dot:PCOL['House Sauce']},
+      {name:'Tandoori Patty',kg:fk['Tandoori Patty']||11,person:'H1 after tempeh',note:'H1 10kg slot',dot:PCOL['Tandoori Patty']},
+      {name:'🥟 Momos (Peri Peri + Keema)',kg:0,qty:'100 plates',person:'H1',note:'60g/plate × 100',dot:'#7c6ef7'},
+      {name:'⚙ WW Rolls',kg:0,qty:'75 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
+      {name:'⚙ Roti',kg:0,qty:'50 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
+    ]},
+    Wed:{color:'#00d4a0',label:'Wednesday',note:'Paneer + Makhani + Dispatch AM',items:[
+      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:'Paneer Filling',kg:fk['Paneer Filling']||62,person:'Shubash + Suneel',note:(fk['Paneer Filling']||62)>50?'warn-50kg':'',dot:PCOL['Paneer Filling']},
+      {name:'Makhani Sauce',kg:30,person:'H1 + overflow',note:'alongside Paneer day',dot:PCOL['Makhani Sauce']},
+      {name:'⚙ WW + MG Rolls',kg:0,qty:'75 + 30 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
+      {name:'🚚 Dispatch AM',kg:0,qty:'Major items',person:'— fast dispatch',note:'dispatch',dot:'#00d4a0'},
+    ]},
+    Thu:{color:'#f5a623',label:'Thursday',note:'⚠ Jeera Rice ALONE + Lehsuni Paneer',items:[
+      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:'⚠ Jeera Rice (ALONE)',kg:fk['Jeera Rice']||66,person:'Shubash + Suneel',note:'jeera-rule',dot:PCOL['Jeera Rice']},
+      {name:'Lehsuni Paneer',kg:fk['Lehsuni Paneer']||15,person:'H1 spare',note:'after tempeh',dot:PCOL['Lehsuni Paneer']},
+      {name:'Paneer Bhurji',kg:fk['Paneer Bhurji']||14,person:'H1',note:'250g packs',dot:PCOL['Paneer Bhurji']},
+      {name:'Tempeh Bhurji',kg:fk['Tempeh Bhurji']||3,person:'H1 spare',note:'250g packs',dot:PCOL['Tempeh Bhurji']},
+      {name:'⚙ MG Rolls (finish)',kg:0,qty:'17 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
+      {name:'⚙ Roti (finish)',kg:0,qty:'52 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
+    ]},
+    Fri:{color:'#e85d5d',label:'Friday',note:'Bi-weekly small items + Dispatch AM',items:[
+      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:'Ghee Roast',kg:fk['Ghee Roast']||12,person:'Suneel',note:'bi-weekly',dot:PCOL['Ghee Roast']},
+      {name:'Masala Tikka',kg:fk['Masala Tikka']||5,person:'Suneel',note:'bi-weekly',dot:PCOL['Masala Tikka']},
+      {name:'Tempeh Lehsuni',kg:fk['Tempeh Lehsuni']||11,person:'Shubash',note:'bi-weekly',dot:PCOL['Tempeh Lehsuni']},
+      {name:'Kung Pao / Desi Chinese',kg:fk['Kung Pao']||18,person:'H1 after tempeh',note:'bi-weekly',dot:PCOL['Kung Pao']},
+      {name:'Fried Rice (part)',kg:Math.min(fk['Fried Rice']||32,16),person:'Shubash',note:'bi-weekly',dot:PCOL['Fried Rice']},
+      {name:'Rajma + Corn Patty',kg:20,person:'Shubash spare',note:'bi-weekly 10+10kg',dot:'#f5a623'},
+      {name:'🚚 Dispatch AM',kg:0,qty:'Jeera Rice + top-up',person:'—',note:'dispatch',dot:'#00d4a0'},
+    ]},
+    Sat:{color:'#8fa8d8',label:'Saturday',note:'Burrito + Pasta Bowl + Dispatch PM',items:[
+      {name:'Raw Tempeh (H1)',kg:20,person:'H1',note:'tempeh half-day',dot:'#00d4a0'},
+      {name:'Burrito Bowl ×6 components',kg:0,qty:'~11 kg each',person:'Suneel + Shubash + H1',note:'bi-weekly',dot:PCOL['Burrito Bowl']},
+      {name:'Pasta Bowl ×7 components',kg:0,qty:'8–14 kg each',person:'Same 3 people',note:'bi-weekly',dot:'#00d4a0'},
+      {name:'Fried Rice (finish)',kg:Math.max(0,(fk['Fried Rice']||32)-16),person:'H1 spare',note:'bi-weekly',dot:PCOL['Fried Rice']},
+      {name:'🤲 Spinach Wraps',kg:0,qty:Math.ceil(S.rolls.Spinach*1.3)+' pcs',person:'Suneel (hand)',note:'hand',dot:'#9d93f9'},
+      {name:'🤲 Beetroot Wraps',kg:0,qty:Math.ceil(S.rolls.Beetroot*1.3)+' pcs',person:'Suneel (hand)',note:'hand',dot:'#9d93f9'},
+      {name:'🚚 Dispatch PM',kg:0,qty:'ALL items',person:'—',note:'dispatch',dot:'#7c6ef7'},
+    ]},
+  };
+
+  // Person load table
+  const personDays={
+    Pushkar:{Mon:'Rolls+Cooking assist',Tue:'Rolls',Wed:'Rolls',Thu:'Rolls',Fri:'Rolls',Sat:'Rolls+Vikas',total:'~roll machine daily'},
+    Vikas:{Mon:'Roll Machine',Tue:'Roll Machine',Wed:'Roll Machine',Thu:'Roll Machine',Fri:'Roll Machine',Sat:'Roll Machine',total:'roll machine only'},
+    Suneel:{Mon:'Keema assist',Tue:'Tofu 28kg+House Sauce assist',Wed:'Paneer assist',Thu:'Jeera Rice 33kg',Fri:'Ghee Roast 12+Masala 5+Fried Rice 16',Sat:'Burrito+Pasta Bowl+🤲Wraps',total:'~30-35 kg/day'},
+    Shubash:{Mon:'Keema 30kg',Tue:'Peri Peri finish+House Sauce assist',Wed:'Paneer 32kg',Thu:'Jeera Rice 33kg',Fri:'Tempeh Lehsuni 11+Fried Rice+Patties',Sat:'Burrito+Pasta Bowl',total:'~30-35 kg/day'},
+    H1:{Mon:'Tempeh 25kg+Peri Peri 18kg+Sauce',Tue:'Tempeh 25kg+Patty 11kg+Momos',Wed:'Tempeh 25kg+Makhani overflow',Thu:'Tempeh 25kg+Lehsuni+Bhurji',Fri:'Tempeh 25kg+Kung Pao 18kg',Sat:'Tempeh 20kg+Burrito+Fried Rice',total:'Tempeh daily + secondary'},
+  };
+  const colors={Pushkar:'var(--b1)',Vikas:'var(--g)',Suneel:'var(--p1)',Shubash:'var(--a)',H1:'var(--r1)'};
+  $('plbody').innerHTML=Object.entries(personDays).map(([p,d])=>`<tr>
+    <td class="tn" style="color:${colors[p]}">${p}</td>
+    ${DAYS.map(day=>`<td style="font-size:10.5px;color:var(--t2)">${d[day]||'—'}</td>`).join('')}
+    <td class="tc" style="font-size:10px;color:var(--t3)">${d.total}</td>
+  </tr>`).join('');
+
+  // Alerts
+  const alerts=[];
+  if((fk['Tempeh Keema']||0)>50)alerts.push({type:'a',msg:`⚠ Tempeh Keema ${(fk['Tempeh Keema']||0).toFixed(0)} kg — Monday: >50 kg rule → Shubash + Suneel both assigned`});
+  if((fk['Paneer Filling']||0)>50)alerts.push({type:'a',msg:`⚠ Paneer Filling ${(fk['Paneer Filling']||0).toFixed(0)} kg — Wednesday: >50 kg rule → 2 people`});
+  if((fk['Jeera Rice']||0)>0)alerts.push({type:'r',msg:`⚠ Jeera Rice ${(fk['Jeera Rice']||0).toFixed(0)} kg on Thursday — ALONE DAY: no Keema, Paneer, or any Tempeh item`});
+  alerts.push({type:'g',msg:`✓ Tempeh requirement: ${tr.toFixed(1)} kg total ÷ 6 days = ${(tr/6).toFixed(1)} kg/day — well within H1's 25 kg/day capacity`});
+  $('prod-alerts').innerHTML=alerts.map(a=>`<div class="alert al-${a.type}">${a.msg}</div>`).join('');
+
+  // Day blocks
+  let html='';
+  for(const day of DAYS){
+    const d=schedule[day];
+    const cookKg=d.items.filter(x=>x.kg>0).reduce((s,x)=>s+x.kg,0);
+    const pct=Math.min(100,Math.round(cookKg/130*100));
+    const pctCol=pct>90?'#e85d5d':pct>70?'#f5a623':'#00d4a0';
+    html+=`<div class="day-block">
+      <div class="day-hdr" style="border-left:3px solid ${d.color}">
+        <div class="day-name" style="color:${d.color}">${d.label}</div>
+        <div class="day-stats">
+          <div class="day-stat"><b>${cookKg.toFixed(1)} kg</b> cooking</div>
+          <div class="day-stat"><b>${d.items.length}</b> tasks</div>
+          <div class="day-stat"><div style="width:80px;height:4px;background:var(--bg5);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle"><div style="width:${pct}%;height:100%;background:${pctCol};border-radius:2px"></div></div> <span style="color:${pctCol};font-size:10px">${pct}%</span></div>
+        </div>
+      </div>
+      <div style="font-size:10.5px;color:var(--t3);padding:5px 16px 0;font-style:italic">${d.note}</div>`;
+    d.items.forEach(it=>{
+      const kgStr=it.kg>0?`${it.kg} kg`:it.qty||'';
+      let noteHtml='';
+      if(it.note==='machine')noteHtml=`<span class="prod-note note-machine">⚙ machine</span>`;
+      else if(it.note==='hand')noteHtml=`<span class="prod-note note-hand">🤲 hand</span>`;
+      else if(it.note==='dispatch')noteHtml=`<span class="prod-note note-disp">🚚 dispatch</span>`;
+      else if(it.note==='bi-weekly')noteHtml=`<span class="prod-note note-bi">bi-weekly</span>`;
+      else if(it.note==='jeera-rule')noteHtml=`<span class="prod-note note-warn">⚠ NO Tempeh/Paneer/Keema today</span>`;
+      else if(it.note==='warn-50kg')noteHtml=`<span class="prod-note note-warn">⚠ >50 kg: 2 people</span>`;
+      else if(it.note)noteHtml=`<span class="prod-note note-ok">${it.note}</span>`;
+      html+=`<div class="prod-row">
+        <div class="prod-dot" style="background:${it.dot}"></div>
+        <div class="prod-name">${it.name}</div>
+        <div class="prod-kg" style="color:${it.dot}">${kgStr}</div>
+        <div>${noteHtml}</div>
+        <div class="prod-person">${it.person}</div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+  $('prod-days').innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════════
+//  DISPATCH
+// ════════════════════════════════════════════════════════════
+function renderDispatch(){
+  const{fk,bd}=S.res;
+  const totalW=BR.reduce((s,b)=>s+(bd[b]?.orders||0),0)||1;
+  function share(br){const w=bd[br]?.orders||0;return br==='IND'?(w/totalW*1.5):(w/totalW);}
+  const totalShare=BR.reduce((s,b)=>s+share(b),0);
+  function split(totalKg,coverage=0.9){
+    const r={};BR.forEach(br=>r[br]=Math.max(0.5,Math.round(totalKg*coverage*share(br)/totalShare*10)/10));
+    return r;
+  }
+
+  const runs=[
+    {id:'wed',badge:'rb-wed',title:'Wednesday Morning',note:'Major items only · fast dispatch · 3–4 days coverage per branch',
+     rows:[
+       {item:'Tempeh Keema',vals:split((fk['Tempeh Keema']||56)*0.75)},
+       {item:'Paneer Filling',vals:split((fk['Paneer Filling']||62)*0.75)},
+       {item:'Peri Peri Tempeh',vals:split((fk['Peri Peri Tempeh']||27)*0.75)},
+       {item:'Tofu Filling',vals:split((fk['Tofu Filling']||28)*0.75)},
+     ]},
+    {id:'fri',badge:'rb-fri',title:'Friday Morning',note:'Jeera Rice (from Thursday) + low-stock top-ups per branch',
+     rows:[
+       {item:'Jeera Rice',vals:split(fk['Jeera Rice']||66)},
+       {item:'Tofu Filling (top-up)',vals:split((fk['Tofu Filling']||28)*0.18)},
+       {item:'Tempeh Keema (top-up)',vals:split((fk['Tempeh Keema']||56)*0.18)},
+       {item:'Lehsuni Paneer',vals:split(fk['Lehsuni Paneer']||15)},
+     ]},
+    {id:'sat',badge:'rb-sat',title:'Saturday Evening',note:'ALL items · small 250g packs cover 2 weeks · bi-weekly items included',
+     rows:[
+       {item:'Paneer Bhurji',vals:split(fk['Paneer Bhurji']||14)},
+       {item:'Tempeh Lehsuni',vals:split(fk['Tempeh Lehsuni']||11)},
+       {item:'Ghee Roast',vals:split(fk['Ghee Roast']||12)},
+       {item:'Masala Tikka',vals:split(fk['Masala Tikka']||5)},
+       {item:'Kung Pao / Desi Chinese',vals:split(fk['Kung Pao']||18)},
+       {item:'Fried Rice',vals:split(fk['Fried Rice']||32)},
+       {item:'Tandoori Patty',vals:split(11)},
+       {item:'Rajma + Corn Patty',vals:split(20)},
+       {item:'Tempeh Bhurji',vals:split(fk['Tempeh Bhurji']||3)},
+     ]},
+  ];
+
+  let html='';
+  runs.forEach(run=>{
+    html+=`<div class="block">
+      <div class="block-hdr">
+        <span class="run-badge ${run.badge}">${run.title.toUpperCase()}</span>
+        <span class="block-note">${run.note}</span>
+      </div>
+      <div class="tw"><table class="t">
+        <thead><tr><th>Item</th><th class="tc" style="color:${BC.HSR}">HSR</th><th class="tc" style="color:${BC.BTM}">BTM</th><th class="tc" style="color:${BC.IND}">IND</th><th class="tc" style="color:${BC.MTH}">MTH</th><th class="tc">Total</th></tr></thead>
+        <tbody>`;
+    run.rows.forEach((row,i)=>{
+      const tot=BR.reduce((s,b)=>s+row.vals[b],0);
+      html+=`<tr>
+        <td class="tn">${row.item}</td>
+        <td class="hsr">${row.vals.HSR.toFixed(1)} kg</td>
+        <td class="btm">${row.vals.BTM.toFixed(1)} kg</td>
+        <td class="ind">${row.vals.IND.toFixed(1)} kg</td>
+        <td class="mth">${row.vals.MTH.toFixed(1)} kg</td>
+        <td class="tot">${tot.toFixed(1)} kg</td>
+      </tr>`;
+    });
+    const grandTot=run.rows.reduce((s,r)=>s+BR.reduce((ss,b)=>ss+r.vals[b],0),0);
+    html+=`<tr class="sum-row"><td>Total this run</td>${BR.map(b=>`<td class="tc">${run.rows.reduce((s,r)=>s+r.vals[b],0).toFixed(1)} kg</td>`).join('')}<td class="tc">${grandTot.toFixed(1)} kg</td></tr>`;
+    html+='</tbody></table></div></div>';
+  });
+  $('disp-tables').innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════════
+//  BREAD ORDER
+// ════════════════════════════════════════════════════════════
+function updateRollSummary(){
+  const rt=S.rolls;
+  ['ww','mg','rt','sp','bt'].forEach((k,i)=>{
+    const types=['WW','MG','Roti','Spinach','Beetroot'];
+    const sold=rt[types[i]]||0;
+    const target=Math.ceil(sold*1.3);
+    $('rs-'+k).textContent=sold;
+    $('rt-'+k).textContent=target+' needed (+30%)';
+  });
+}
+
+function renderBread(){
+  const{bd,rt}=S.res;
+  const WE=1.35;
+
+  // Per-branch daily avg
+  function daily(type,br){return(bd[br]?.wc[type]||0)/7;}
+  function qty(type,br,days,we=1){
+    const d=daily(type,br);
+    const wdDays=Math.max(0,days-2),weDays=Math.min(2,days);
+    return Math.ceil((d*wdDays+d*we*weDays)*1.10*(br==='IND'?1.5:1));
+  }
+
+  const breadItems=[
+    {k:'Focaccia',l:'Herbed Focaccia (5" pcs)',fixed:{HSR:15,BTM:4,IND:3,MTH:9}},
+    {k:'Panini',l:'Panini / Ciabatta (5" pcs)',fixed:{HSR:3,BTM:1,IND:1,MTH:2}},
+    {k:'WW',l:'Whole Wheat Wraps',roll:true,type:'WW'},
+    {k:'MG',l:'Multigrain Wraps (High Protein)',roll:true,type:'MG'},
+    {k:'Spinach',l:'Spinach Wraps 🤲 hand-made',roll:true,type:'Spinach'},
+    {k:'Beetroot',l:'Beetroot Wraps 🤲 hand-made',roll:true,type:'Beetroot'},
+    {k:'Buns',l:'Burger Buns',fixed:{HSR:9,BTM:2,IND:4,MTH:5}},
+    {k:'Roti',l:'Roti / Tawa Roti',roll:true,type:'Roti'},
+    {k:'Brownie',l:'Brownie (bread vendor)',fixed:{HSR:1,BTM:0,IND:1,MTH:1}},
+    {k:'Laddoo',l:'Ragi Laddoo ⚠ separate vendor',fixed:{HSR:1,BTM:0,IND:1,MTH:1},sep:true},
+    {k:'Chikki',l:'Chikki ⚠ separate vendor',fixed:{HSR:0,BTM:1,IND:1,MTH:0},sep:true},
+  ];
+
+  function buildBreadTable(days,we,badgeClass,title,note){
+    let h=`<div class="block"><div class="block-hdr"><span class="run-badge ${badgeClass}">${title}</span><span class="block-note">${note}</span></div>
+    <div class="tw"><table class="t">
+    <thead><tr><th>Item</th><th class="tc" style="color:${BC.HSR}">HSR</th><th class="tc" style="color:${BC.BTM}">BTM</th><th class="tc" style="color:${BC.IND}">IND</th><th class="tc" style="color:${BC.MTH}">MTH</th><th class="tc">Total</th></tr></thead><tbody>`;
+    let grandTot=0;
+    breadItems.forEach(item=>{
+      const vals={};
+      BR.forEach(br=>{
+        if(item.roll) vals[br]=qty(item.type,br,days,we);
+        else vals[br]=Math.round((item.fixed[br]||0)*days*we);
+      });
+      const tot=Object.values(vals).reduce((a,b)=>a+b,0);
+      if(tot===0)return;
+      grandTot+=tot;
+      const isSep=item.sep;
+      const isHand=item.l.includes('🤲');
+      h+=`<tr style="${isSep?'background:var(--a2)':isHand?'background:var(--p4)':''}">
+        <td class="tn" style="${isSep?'color:var(--a)':isHand?'color:var(--p1)':''}">${item.l}</td>
+        ${BR.map(br=>`<td class="tc" style="color:${isSep?'var(--a)':isHand?'var(--p1)':'var(--t1)'};font-weight:600">${vals[br]||'—'}</td>`).join('')}
+        <td class="tot">${tot}</td>
+      </tr>`;
+    });
+    h+=`<tr class="sum-row"><td>Grand Total (pieces)</td>${BR.map(br=>`<td class="tc">${breadItems.reduce((s,item)=>{if(item.roll)return s+qty(item.type,br,days,we);return s+Math.round((item.fixed?.[br]||0)*days*we)},0)}</td>`).join('')}<td class="tot">${grandTot}</td></tr>`;
+    h+='</tbody></table></div></div>';
+    return h;
+  }
+
+  $('bread-tables').innerHTML=
+    buildBreadTable(4.5,1,'rb-mon','MONDAY ORDER','4.5 days coverage: Tue → Fri½ + 1 buffer · standard weekday consumption')+
+    buildBreadTable(6.55,WE,'rb-thu','THURSDAY ORDER','6.55 days: Fri → Tue½ + 1 buffer · weekend multiplier ×1.35 applied');
+}
+
+// ════════════════════════════════════════════════════════════
+//  PACKAGING
+// ════════════════════════════════════════════════════════════
+function renderPackaging(){
+  const fk=S.res.fk;
+  const PSIZE={'Tempeh Keema':800,'Paneer Filling':800,'Peri Peri Tempeh':800,'Tofu Filling':800,'Jeera Rice':800,'Paneer Bhurji':750,'Lehsuni Paneer':750,'Fried Rice':500,'Kung Pao':500,'Tempeh Lehsuni':250,'Tempeh Bhurji':250,'Masala Tikka':250,'Ghee Roast':250,'Tandoori Patty':250,'Rajma Patty':250,'Corn Patty':250};
+  function pkts(item,kg){return Math.ceil(kg*1000/((PSIZE[item]||500)*0.85));}
+
+  const weekly=['Tempeh Keema','Paneer Filling','Peri Peri Tempeh','Tofu Filling','Jeera Rice','Paneer Bhurji','Lehsuni Paneer','Tempeh Bhurji'];
+  const biweekly=['Ghee Roast','Masala Tikka','Tempeh Lehsuni','Kung Pao','Fried Rice','Tandoori Patty','Rajma Patty','Corn Patty'];
+
+  function buildPkgSection(items,badge,badgeClass,note){
+    let h=`<div class="pkg-block"><div class="pkg-hdr"><span class="pkg-tag ${badgeClass}">${badge}</span><span class="pkg-note">${note}</span></div>
+    <div class="tw"><table class="t">
+    <thead><tr><th>Item</th><th class="tc">Packet Size</th><th class="tc">Produce KG</th><th class="tc">Packets to Fill</th><th class="tc">HSR</th><th class="tc">BTM</th><th class="tc">IND</th><th class="tc">MTH</th><th class="tc">Dispatch Run</th></tr></thead><tbody>`;
+    items.forEach(item=>{
+      const kg=fk[item]||0; if(kg===0)return;
+      const psize=PSIZE[item]||500;
+      const total=pkts(item,kg);
+      // split packets by branch usage ratio
+      const bd=S.res.bd;
+      const totalOrders=BR.reduce((s,b)=>s+(bd[b]?.orders||0),0)||1;
+      const brPkts={};
+      BR.forEach(br=>{
+        const w=(bd[br]?.orders||0)/totalOrders*(br==='IND'?1.5:1);
+        brPkts[br]=Math.round(total*w/BR.reduce((s,b2)=>{const w2=(bd[b2]?.orders||0)/totalOrders*(b2==='IND'?1.5:1);return s+w2;},0));
+      });
+      const freq=biweekly.includes(item)?'Sat PM (bi-weekly)':'Wed AM + Fri AM';
+      const freqCls=biweekly.includes(item)?'chip-p':'chip-b';
+      h+=`<tr><td class="tn">${item}</td><td class="tc" style="font-family:var(--fm);color:var(--t2)">${psize}g</td>
+        <td class="kg">${kg.toFixed(1)} kg</td>
+        <td class="tot">${total} pkts</td>
+        <td class="hsr">${brPkts.HSR||'—'}</td>
+        <td class="btm">${brPkts.BTM||'—'}</td>
+        <td class="ind">${brPkts.IND||'—'}</td>
+        <td class="mth">${brPkts.MTH||'—'}</td>
+        <td class="tc"><span class="chip ${freqCls}" style="font-size:9px">${freq}</span></td>
+      </tr>`;
+    });
+    h+='</tbody></table></div></div>';
+    return h;
+  }
+
+  // Bowl components
+  const bowlItems=[
+    {name:'Red Rajma (Burrito)',kg:11,psize:250,bowl:'🌯'},
+    {name:'Pinto Beans (Burrito)',kg:9,psize:250,bowl:'🌯'},
+    {name:'Corn Salsa (Burrito)',kg:10,psize:250,bowl:'🌯'},
+    {name:'Pico De Gala (Burrito)',kg:10,psize:250,bowl:'🌯'},
+    {name:'Fajita Veggies (Burrito)',kg:10,psize:250,bowl:'🌯'},
+    {name:'Sour Cream (Burrito)',kg:8,psize:250,bowl:'🌯'},
+    {name:'Pasta (Pasta Bowl)',kg:16,psize:500,bowl:'🍝'},
+    {name:'Broccoli sautéed',kg:16,psize:500,bowl:'🍝'},
+    {name:'Bell Peppers',kg:14,psize:250,bowl:'🍝'},
+    {name:'Jalapeño',kg:8,psize:250,bowl:'🍝'},
+    {name:'Basil Pesto Sauce',kg:10,psize:250,bowl:'🍝'},
+    {name:'White Sauce',kg:16,psize:500,bowl:'🍝'},
+  ];
+  let bowlHtml=`<div class="pkg-block"><div class="pkg-hdr"><span class="pkg-tag" style="background:var(--p3);color:var(--p1)">BI-WEEKLY · SAT PM · 3 PEOPLE</span><span class="pkg-note">Burrito Bowl ×6 components + Pasta Bowl ×7 components · all cut & sautéed same day</span></div>
+  <div class="tw"><table class="t"><thead><tr><th>Component</th><th class="tc">Type</th><th class="tc">Packet Size</th><th class="tc">Produce KG</th><th class="tc">Packets</th></tr></thead><tbody>`;
+  bowlItems.forEach(it=>{
+    const n=Math.ceil(it.kg*1000/(it.psize*0.85));
+    bowlHtml+=`<tr><td class="tn">${it.name}</td><td class="tc">${it.bowl}</td><td class="tc" style="font-family:var(--fm);color:var(--t2)">${it.psize}g</td><td class="kg">${it.kg} kg</td><td class="tot">${n} pkts</td></tr>`;
+  });
+  bowlHtml+='</tbody></table></div></div>';
+
+  $('pkg-tables').innerHTML=
+    buildPkgSection(weekly,'WEEKLY','chip-b','Fresh every week · Wed AM + Fri AM dispatch · based on sales data + 30% buffer')+
+    buildPkgSection(biweekly,'BI-WEEKLY','chip-p','2-week stock · Saturday PM dispatch · includes 250g small packs')+bowlHtml;
+}
+
+// ════════════════════════════════════════════════════════════
+//  TEMPEH
+// ════════════════════════════════════════════════════════════
+let tempChartInst=null;
+function renderTempeh(){
+  const fk=S.res.fk;
+  const total=tempehReq(fk);
+  const daily=total/6;
+  $('t-total').textContent=total.toFixed(1)+' kg';
+  $('t-daily').textContent=daily.toFixed(1)+' kg/day';
+  $('t-spare').textContent=(25-daily).toFixed(1)+' kg/day';
+  const maxKg=Math.max(...TEMPEH_ITEMS.map(k=>fk[k]||0));
+  const barCols={default:'var(--p)','Peri Peri Tempeh':'var(--p1)','Kung Pao':'var(--b)','Ghee Roast':'var(--a)','Tandoori Patty':'var(--a1)','Masala Tikka':'var(--r1)','Tempeh Bhurji':'var(--p1)'};
+  $('tbars').innerHTML=TEMPEH_ITEMS.map(item=>{
+    const kg=fk[item]||0;if(kg===0)return'';
+    const pct=Math.round(kg/maxKg*100),col=barCols[item]||barCols.default;
+    return `<div class="tb-row"><div class="tb-name">${item}</div><div class="tb-bar"><div class="tb-fill" style="width:${pct}%;background:${col}"></div></div><div class="tb-val">${kg.toFixed(1)} kg</div><div class="tb-raw">→ ${(kg*0.35).toFixed(1)} kg</div></div>`;
+  }).join('');
+  initTempehChart();
+}
+function initTempehChart(){
+  const fk=S.res?.fk;
+  const total=fk?tempehReq(fk):51;
+  const daily=total/6;
+  const ctx=$('ch-temp');if(!ctx)return;
+  if(tempChartInst){tempChartInst.destroy();tempChartInst=null;}
+  tempChartInst=new Chart(ctx,{type:'bar',data:{labels:DAYS,datasets:[
+    {label:'Tempeh Made (kg)',data:DAYS.map(d=>d==='Sat'?daily*0.8:daily),backgroundColor:'rgba(0,212,160,0.65)',borderRadius:5,borderSkipped:false},
+    {label:'Capacity (25 kg)',data:DAYS.map(()=>25),type:'line',borderColor:'rgba(124,110,247,0.4)',pointRadius:0,borderDash:[4,4],backgroundColor:'transparent'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#525872',boxWidth:10}}},scales:{x:{grid:{color:'#1c2130'},ticks:{color:'#525872'}},y:{grid:{color:'#1c2130'},ticks:{color:'#525872',callback:v=>v+' kg'},max:30}}}});
+}
+
+// ════════════════════════════════════════════════════════════
+//  INTELLIGENCE
+// ════════════════════════════════════════════════════════════
+function renderIntelligence(){
+  const{fk,bd}=S.res;
+  const orders=BR.reduce((o,b)=>{o[b]=bd[b]?.orders||0;return o},{});
+  const topBr=BR.reduce((a,b)=>orders[a]>orders[b]?a:b);
+  const tr=tempehReq(fk);
+  $('intel-body').innerHTML=`
+  <div class="g2">
+    <div class="cc"><div class="cc-title" style="color:var(--g)">📈 Growth Insights</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:2.2">
+        <div>• <b style="color:var(--t0)">${topBr}</b> is top volume branch (${orders[topBr].toLocaleString()} orders)</div>
+        <div>• HSR <b>${orders.HSR}</b> · MTH <b>${orders.MTH}</b> · IND <b>${orders.IND}</b> · BTM <b>${orders.BTM}</b></div>
+        <div>• IND QSR expanding — 1.5× quantities already in all schedules</div>
+        <div>• Total production required next week: <b style="color:var(--t0)">${Object.values(fk).reduce((a,b)=>a+b,0).toFixed(0)} kg</b></div>
+        <div>• Momos: 100 plates/week = 3 kg Keema + 3 kg Peri Peri filling (included)</div>
+      </div>
+    </div>
+    <div class="cc"><div class="cc-title" style="color:var(--r1)">⚠ Production Alerts</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:2.2">
+        ${(fk['Tempeh Keema']||0)>50?`<div>• ⚠ Tempeh Keema <b style="color:var(--a)">${(fk['Tempeh Keema']||0).toFixed(0)} kg</b> — 2 people on Monday (>50 kg rule)</div>`:''}
+        ${(fk['Paneer Filling']||0)>50?`<div>• ⚠ Paneer Filling <b style="color:var(--a)">${(fk['Paneer Filling']||0).toFixed(0)} kg</b> — 2 people on Wednesday (>50 kg rule)</div>`:''}
+        <div>• ⚠ House Sauce 50 kg Tuesday — 2 people required</div>
+        <div>• ⚠ Jeera Rice Thursday — <b>strict isolation</b>: no Keema/Paneer/Tempeh same day</div>
+        <div>• Tempeh: <b>${tr.toFixed(1)} kg</b> total = <b>${(tr/6).toFixed(1)} kg/day</b> avg (within H1 capacity ✓)</div>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cc-title" style="color:var(--p1)">💡 Recommendations</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:2.2">
+        <div>• Launch Momos across HSR + MTH — pilot ready, potential 40+ plates/day at HSR</div>
+        <div>• Pasta Bowl bi-weekly target: 240 bowls achievable with current 3-person Sat team</div>
+        <div>• Rajma Tempeh Patty gaining volume — may need to go weekly soon</div>
+        <div>• Discount rate at 21.6% — monitor closely, target below 20%</div>
+        <div>• BTM growing — consider 15% increase in BTM bread order next week</div>
+      </div>
+    </div>
+    <div class="cc"><div class="cc-title" style="color:var(--a)">📦 Packaging Notes</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:2.2">
+        <div>• 800g bags: Keema, Paneer, Tofu, Jeera Rice — weekly, Wed + Fri runs</div>
+        <div>• 250g bags: Tempeh Lehsuni, Bhurji, Masala Tikka, Ghee Roast — bi-weekly Sat PM</div>
+        <div>• Bowl components: all 13 items on Saturday, 3 people together</div>
+        <div>• Laddoo + Chikki: <b>separate vendor</b> — order independently from bread</div>
+        <div>• Momos: fresh daily from pre-filled packets, wrap same morning</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  CHARTS
+// ════════════════════════════════════════════════════════════
+let ovInit=false, ydInit=false;
+function initOverview(){
+  if(ovInit)return;ovInit=true;
+  const orders=S.res?BR.map(b=>S.res.bd[b]?.orders||0):[1052,611,290,257];
+  new Chart($('ch-gmv'),{type:'bar',data:{labels:BR,datasets:[{data:[14.2,6.8,3.5,2.0],backgroundColor:Object.values(BC),borderRadius:8,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1c2130'},ticks:{color:'#525872'}},y:{grid:{color:'#1c2130'},ticks:{color:'#525872',callback:v=>`₹${v}L`}}}}});
+  new Chart($('ch-ord'),{type:'doughnut',data:{labels:BR,datasets:[{data:orders,backgroundColor:Object.values(BC),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#8890aa',padding:14,font:{size:11}}}},cutout:'62%'}});
+  new Chart($('ch-wow'),{type:'line',data:{labels:['Mar 1','Mar 7','Mar 14','Mar 21'],datasets:[{label:'HSR',data:[820,910,1052,1140],borderColor:BC.HSR,backgroundColor:'rgba(124,110,247,.08)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:BC.HSR},{label:'MTH',data:[430,510,611,680],borderColor:BC.MTH,backgroundColor:'rgba(74,158,255,.06)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:BC.MTH},{label:'BTM',data:[150,195,257,310],borderColor:BC.BTM,tension:.4,pointRadius:4,pointBackgroundColor:BC.BTM},{label:'IND',data:[210,240,290,320],borderColor:BC.IND,tension:.4,pointRadius:4,pointBackgroundColor:BC.IND}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index'},plugins:{legend:{labels:{color:'#8890aa',boxWidth:10}}},scales:{x:{grid:{color:'#1c2130'},ticks:{color:'#525872'}},y:{grid:{color:'#1c2130'},ticks:{color:'#525872'}}}}});
+  const topItems=S.res?Object.entries(Object.values(S.res.bd).reduce((acc,{items})=>{for(const[k,v]of Object.entries(items))acc[k]=(acc[k]||0)+v;return acc},{})).sort(([,a],[,b])=>b-a).slice(0,7):[['Smokey Paneer Sandwich',109],['Tandoori Tempeh Burger',92],['Keema Roll WW',78],['Tofu Tikka Sand',63],['Keema Rice Bowl',57],['Lehsuni Paneer Sand',46],['Peri Peri Roll WW',40]];
+  new Chart($('ch-items'),{type:'bar',indexAxis:'y',data:{labels:topItems.map(([k])=>k.slice(0,30)),datasets:[{data:topItems.map(([,v])=>v),backgroundColor:topItems.map((_,i)=>Object.values(BC)[i%4]),borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1c2130'},ticks:{color:'#525872'}},y:{grid:{display:false},ticks:{color:'#8890aa',font:{size:10}}}}}});
+}
+function initYesterday(){
+  if(ydInit)return;ydInit=true;
+  new Chart($('ch-hr'),{type:'bar',data:{labels:['12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p'],datasets:[{data:[18,22,14,12,19,28,35,42,39,31,24,16],backgroundColor:'rgba(124,110,247,.65)',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#525872'}},y:{grid:{color:'#1c2130'},ticks:{color:'#525872'}}}}});
+  new Chart($('ch-br2'),{type:'bar',data:{labels:BR,datasets:[{data:[148,28,42,82],backgroundColor:Object.values(BC),borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#525872'}},y:{grid:{color:'#1c2130'},ticks:{color:'#525872',callback:v=>'₹'+v}}}}});
+}
+</script>
+</body>
+</html>
