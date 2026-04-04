@@ -371,17 +371,23 @@ table.t tr.sum-row td{background:var(--p4);color:var(--t0);font-weight:700;borde
   </div>
   <div class="prod-overview" id="prod-summary">
     <div class="mc mc-pleft"><div class="mc-label">Total Cooking KG</div><div class="mc-val md" id="ps-kg">—</div></div>
-    <div class="mc mc-gleft"><div class="mc-label">Tempeh (42%)</div><div class="mc-val md" id="ps-temp">—</div></div>
+    <div class="mc mc-gleft"><div class="mc-label">Tempeh (per-item %)</div><div class="mc-val md" id="ps-temp">—</div></div>
     <div class="mc mc-aleft"><div class="mc-label">Peak Day</div><div class="mc-val md" id="ps-peak">Monday</div></div>
     <div class="mc mc-bleft"><div class="mc-label">People on Peak</div><div class="mc-val md">4</div></div>
   </div>
-  <div class="ax ax-r" style="margin-bottom:8px">
+  <!-- Week selector tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+    <button class="btab on" id="wtab1" onclick="switchProdWeek(1)">📅 Week 1 — Zero Stock Start</button>
+    <button class="btab" id="wtab2" onclick="switchProdWeek(2)">📅 Week 2 — Running Production</button>
+    <span style="font-size:10px;color:var(--t3);margin-left:8px">Shift: 10am–8pm · 10hr · 3 people · Max 22kg tempeh</span>
+  </div>
+  <div class="ax ax-r" id="wk1-note" style="margin-bottom:8px">
   ⚠️ <b>Week 1 Monday: ZERO STOCK — No tempeh items possible.</b> H1 starts making raw tempeh (ready Tuesday). Non-tempeh items only: Paneer Filling, Peri Peri Sauce prep, Tofu Filling, House Sauce.
-</div>
-<div class="ax ax-b" style="margin-bottom:8px">
-  ℹ️ <b>Week 2:</b> Full running production. Peri Peri Sauce made Monday for Wednesday Peri Peri Tempeh. Burrito Bowl (Week 1 Sat) and Pasta Bowl (Week 2 Sat) on SEPARATE days.
-</div>
-<div id="prod-alerts"></div>
+  </div>
+  <div class="ax ax-b" id="wk2-note" style="margin-bottom:8px;display:none">
+  ℹ️ <b>Week 2 — Running Production:</b> Peri Peri Sauce made Monday for Wednesday. Burrito Bowl (Wk1 Sat) and Pasta Bowl (Wk2 Sat) on SEPARATE days. H1 free 2h during tempeh boiling → Rajma/Chickpea tempeh.
+  </div>
+  <div id="prod-alerts"></div>
 
   <!-- PERSON LOAD SUMMARY -->
   <div class="cc" style="margin-bottom:16px" id="person-load-card">
@@ -479,6 +485,7 @@ const S = { files:{}, res:null, rolls:{WW:0,MG:0,Spinach:0,Beetroot:0,Roti:0} };
 const BR = ['HSR','BTM','IND','MTH'];
 const BC = {HSR:'#7c6ef7',BTM:'#00d4a0',IND:'#f5a623',MTH:'#4a9eff'};
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+let currentProdWeek = 1; // 1 = Week 1 zero-stock start, 2 = Week 2 running
 
 Chart.defaults.color = '#525872';
 Chart.defaults.font.family = "'Plus Jakarta Sans',system-ui";
@@ -498,6 +505,14 @@ function go(id, el) {
 }
 function setPeriod(el) { document.querySelectorAll('.pt-btn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); }
 function btab(el) { document.querySelectorAll('.btab').forEach(b=>b.classList.remove('on')); el.classList.add('on'); }
+function switchProdWeek(w) {
+  currentProdWeek = w;
+  ['wtab1','wtab2'].forEach((id,i) => { const el = $(id); if(el) el.classList.toggle('on', i+1===w); });
+  const n1 = $('wk1-note'), n2 = $('wk2-note');
+  if(n1) n1.style.display = w===1 ? 'flex' : 'none';
+  if(n2) n2.style.display = w===2 ? 'flex' : 'none';
+  if(S.res) renderProduction();
+}
 
 // ════════════════════════════════════════════════════════════
 //  XLSX PARSER (inlineStr-aware)
