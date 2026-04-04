@@ -445,7 +445,7 @@ table.t tr.sum-row td{background:var(--p4);color:var(--t0);font-weight:700;borde
   </div>
   <div class="g3">
     <div class="mc mc-gleft"><div class="mc-label">Total Raw Tempeh</div><div class="mc-val xl" style="color:var(--g)" id="t-total">—</div><div class="mc-sub">Required this week</div></div>
-    <div class="mc mc-bleft"><div class="mc-label">Daily Average</div><div class="mc-val md" id="t-daily">—</div><div class="mc-sub">vs 25 kg/day capacity</div></div>
+    <div class="mc mc-bleft"><div class="mc-label">Daily Average</div><div class="mc-val md" id="t-daily">—</div><div class="mc-sub">vs 22 kg/day max (Rule 7)</div></div>
     <div class="mc mc-pleft"><div class="mc-label">Spare Capacity / Day</div><div class="mc-val md" id="t-spare">—</div><div class="mc-sub">Available for other tasks</div></div>
   </div>
   <div class="cc" style="margin-bottom:16px">
@@ -617,7 +617,14 @@ function onDragLeave(){dz.classList.remove('over');}
 // ════════════════════════════════════════════════════════════
 //  SCHEDULE CALCULATOR
 // ════════════════════════════════════════════════════════════
-function buf(g,isBi){const wk=g/1000;const base=wk*(isBi?2:1);const prod=base*1.15;const extra=(wk/7)*3;return Math.max(0.5,Math.round((prod+extra)*10)/10);} // grams → KG with 30% buffer
+function buf(g,isBi=false){
+  // 15% production buffer + 3 extra days + 15% reheating loss in kitchen
+  const wk=withReheatLoss(g/1000);// account for 15% kitchen reheating loss
+  const base=wk*(isBi?2:1);
+  const prod=base*1.15;// 15% production buffer
+  const extra=(wk/7)*3;// 3 extra days for cloud kitchens
+  return Math.max(0.5,Math.round((prod+extra)*10)/10);
+} // grams → KG with 30% buffer
 
 function calcFillingsKg(bd){
   const tot={};
@@ -710,6 +717,78 @@ function renderAll(){
 // ════════════════════════════════════════════════════════════
 //  PRODUCTION
 // ════════════════════════════════════════════════════════════
+// Item capacity & constraints from document
+const ITEM_CAP={
+  'Tempeh Keema':    {maxKg:60,hours:10,helpHrs:3.5,person:1},
+  'Jeera Rice':      {maxKg:40,hours:5,helpHrs:0,person:1},
+  'Paneer Filling':  {maxKg:60,hours:10,helpHrs:3,person:1},
+  'Peri Peri Tempeh':{maxKg:60,hours:10,helpHrs:4,person:1},
+  'Peri Peri Sauce': {maxKg:35,hours:10,helpHrs:0,person:1},
+  'Tofu Filling':    {maxKg:50,hours:10,helpHrs:4,person:1},
+  'Paneer Bhurji':   {maxKg:50,hours:10,helpHrs:3,person:1},
+  'Lehsuni Paneer':  {maxKg:50,hours:10,helpHrs:3,person:1},
+  'Fried Rice':      {maxKg:40,hours:6,helpHrs:0,person:1},
+  'Tempeh Lehsuni':  {maxKg:50,hours:10,helpHrs:3,person:1},
+  'Tempeh Bhurji':   {maxKg:60,hours:10,helpHrs:4,person:1},
+  'Kung Pao':        {maxKg:50,hours:10,helpHrs:4,person:1},
+  'Masala Tikka':    {maxKg:40,hours:10,helpHrs:4,person:1},
+  'Ghee Roast':      {maxKg:50,hours:10,helpHrs:3,person:1},
+  'Tofu Bhurji':     {maxKg:60,hours:10,helpHrs:3,person:1},
+  'Chilli Paneer':   {maxKg:50,hours:10,helpHrs:3,person:1},
+  'Peri Peri Paneer':{maxKg:50,hours:10,helpHrs:3,person:1},
+  'House Sauce':     {maxKg:60,hours:5,helpHrs:0,person:1},
+  'Makhani Sauce':   {maxKg:60,hours:10,helpHrs:3,person:1},
+  'Sweet n Spicy Sauce':{maxKg:50,hours:5,helpHrs:0,person:1},
+  'Mint Sauce':      {maxKg:50,hours:5,helpHrs:0,person:1},
+  'Tandoori Sauce':  {maxKg:50,hours:5,helpHrs:0,person:1},
+  'Tandoori Patty':  {maxKg:25,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},// 1hr/25kg packing
+  'Mexican Patty':   {maxKg:25,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Corn N Cheese Patty':{maxKg:25,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Rajma Tempeh Patty':{maxKg:25,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Chickpea Tempeh Patty':{maxKg:25,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Potato Fingers':  {maxKg:9,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},// 1hr/10kg
+  'Tofu Fingers':    {maxKg:9,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Veggie Fingers':  {maxKg:9,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Tofu Balls':      {maxKg:12,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Tempeh Balls':    {maxKg:12,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Veg Balls':       {maxKg:12,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+  'Potato Balls':    {maxKg:12,hours:10,helpHrs:0,person:1,blastFreeze:true,packNextDay:1},
+};
+// Factory constraints (from document)
+const FACTORY={
+  bratPan:60,          // kg max in brat pan
+  cookPot1:40,         // kg cooking pot 1
+  cookPot2:25,         // kg cooking pot 2
+  blastFreezerCap:50,  // kg regular items
+  blastFreezerPatty:30,// kg patties/balls/fingers
+  blastFreezeHrs:5,    // hours to fully freeze
+  freezerStorage:80,   // each freezer kg
+  rawTempehReserve:40, // kg kept for raw tempeh always
+  maxTempehKg:22,      // max 22kg tempeh per day
+  tempehHours:6,       // 6 hours total
+  tempehFreeHrs:2,     // first 2hrs = boiling/drying = person is free
+  workingHoursPerDay:10,// 10 hour shift
+  totalPeople:3,       // CURRENT: 3 people
+};
+// Tempeh percentages PER ITEM (verified from document)
+const TEMPEH_PCT={
+  'Tempeh Keema':0.42,'Peri Peri Tempeh':0.38,'Tempeh Lehsuni':0.32,
+  'Tempeh Bhurji':0.39,'Kung Pao':0.23,'Masala Tikka':0.30,'Ghee Roast':0.30,
+  'Tandoori Patty':0.33,'Rajma Tempeh Patty':0.30,'Chickpea Tempeh Patty':0.30,
+  'Tempeh Balls':0.33,
+};
+// 3 tempeh types (Rule: separate scheduling)
+const TEMPEH_TYPES={
+  regular:['Tempeh Keema','Peri Peri Tempeh','Kung Pao','Ghee Roast','Tempeh Lehsuni',
+           'Masala Tikka','Tempeh Bhurji','Tandoori Patty','Tempeh Balls'],
+  rajma:['Rajma Tempeh Patty'],
+  chickpea:['Chickpea Tempeh Patty'],
+};
+// Reheating loss in kitchen (15% — must factor into production)
+const KITCHEN_REHEAT_LOSS=0.15;
+// Peri Peri Sauce: also needed for ALL peri peri menu items (25g each)
+const PP_SAUCE_PER_ITEM_G=25;
+
 const PCOL={
   'Tempeh Keema':'#7c6ef7','Peri Peri Tempeh':'#9d93f9','Tofu Filling':'#4a9eff',
   'Paneer Filling':'#00d4a0','Jeera Rice':'#f5a623','Lehsuni Paneer':'#00c9b8',
@@ -718,103 +797,180 @@ const PCOL={
   'Tempeh Lehsuni':'#9d93f9','Ghee Roast':'#f5a623','Masala Tikka':'#e85d5d',
   'Kung Pao':'#4a9eff','Fried Rice':'#00d4a0','Burrito Bowl':'#7c6ef7','Raw Tempeh':'#00d4a0',
 };
-const TEMPEH_ITEMS=['Tempeh Keema','Peri Peri Tempeh','Kung Pao','Ghee Roast','Tempeh Lehsuni','Tandoori Patty','Masala Tikka','Tempeh Bhurji','Rajma Tempeh Patty','Chickpea Tempeh Patty'];
-function tempehReq(fk){return TEMPEH_ITEMS.reduce((s,k)=>s+(fk[k]||0)*0.42,0);}
+const TEMPEH_ITEMS=Object.keys(TEMPEH_PCT);
+// Regular, Rajma, Chickpea tempeh requirements (separate scheduling!)
+function tempehReq(fk,type='regular'){
+  return TEMPEH_TYPES[type].reduce((s,k)=>{
+    const kg=fk[k]||0;
+    const pct=TEMPEH_PCT[k]||0.42;
+    return s+kg*pct;
+  },0);
+}
+// Total across all types
+function tempehReqAll(fk){
+  return Object.entries(TEMPEH_PCT).reduce((s,[k,pct])=>s+(fk[k]||0)*pct,0);
+}
+// Apply reheating loss: production must cover actual consumption + 15% loss
+function withReheatLoss(kg){return kg/(1-KITCHEN_REHEAT_LOSS);}
 
 function renderProduction(){
   const fk=S.res.fk;
-  const tr=tempehReq(fk);
-  const totalKg=Object.values(fk).reduce((a,b)=>a+b,0);
+  const tr=tempehReqAll(fk);
+  const trReg=tempehReq(fk,'regular');
+  const trRajma=tempehReq(fk,'rajma');
+  const trChickpea=tempehReq(fk,'chickpea');
+  const totalKg=Object.values(fk).reduce((a,b)=>a+(typeof b==='number'?b:0),0);
+
+  // Helper: check if item exceeds capacity
+  function capNote(item,kg){
+    const cap=ITEM_CAP[item];
+    if(!cap)return'';
+    if(kg>cap.maxKg){
+      const batches=Math.ceil(kg/cap.maxKg);
+      return`⚠ ${kg.toFixed(0)}kg > ${cap.maxKg}kg max → needs ${batches} days`;
+    }
+    if(cap.helpHrs>0&&kg>cap.maxKg*0.6)return`needs ${cap.helpHrs}h assist`;
+    return'';
+  }
+  function needsAssist(item,kg){const cap=ITEM_CAP[item];return cap&&cap.helpHrs>0&&kg>=cap.maxKg*0.5;}
+  function overCap(item,kg){const cap=ITEM_CAP[item];return cap&&kg>cap.maxKg;}
+  function blastQty(item){const cap=ITEM_CAP[item];return cap&&cap.blastFreeze;}
+
+  // --- PERSON LOAD CALCULATION ---
+  // Factory: 3 people + roll machine (Pushkar on machine)
+  // Person A = Suneel, Person B = Shubash, Person C = H1 (tempeh)
+  // H1 has 2 free hours while tempeh boils → can prep another item
+
+  // Blast freezer load (50kg regular, 30kg patties/balls)
+  const blastItems=Object.entries(fk).filter(([k])=>blastQty(k)).map(([k,v])=>({item:k,kg:v}));
+  const blastKgReg=blastItems.filter(x=>!x.item.includes('Patty')&&!x.item.includes('Ball')&&!x.item.includes('Finger')).reduce((s,x)=>s+x.kg,0);
+  const blastKgSmall=blastItems.filter(x=>x.item.includes('Patty')||x.item.includes('Ball')||x.item.includes('Finger')).reduce((s,x)=>s+x.kg,0);
+  const blastRounds=Math.ceil(blastKgSmall/30)+Math.ceil(blastKgReg/50);
+
+  // Person hours check — are 3 people enough?
+  const dailyHrNeeded={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0};
+  const scheduleItems=[
+    {item:'Tempeh Keema',day:'Mon',pct:TEMPEH_PCT['Tempeh Keema']},
+    {item:'Peri Peri Tempeh',day:'Mon'},
+    {item:'Peri Peri Sauce',day:'Sun'},// day before
+    {item:'Tofu Filling',day:'Tue'},
+    {item:'Paneer Filling',day:'Wed'},
+    {item:'Jeera Rice',day:'Thu'},
+    {item:'Lehsuni Paneer',day:'Thu'},
+    {item:'Paneer Bhurji',day:'Thu'},
+    {item:'Ghee Roast',day:'Fri'},
+    {item:'Masala Tikka',day:'Fri'},
+    {item:'Tempeh Lehsuni',day:'Fri'},
+    {item:'Kung Pao',day:'Fri'},
+    {item:'Fried Rice',day:'Fri'},
+  ];
+
   $('ps-kg').textContent=totalKg.toFixed(0)+' kg';
   $('ps-temp').textContent=tr.toFixed(1)+' kg';
 
-  const schedule={
-    Mon:{color:'#4a9eff',label:'Monday',note:'Keema + Peri Peri + Tempeh making',items:[
-      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
-      {name:'Tempeh Keema',kg:fk['Tempeh Keema']||56,person:'Shubash + Suneel',note:(fk['Tempeh Keema']||56)>50?'warn-50kg':'',dot:PCOL['Tempeh Keema']},
-      {name:'Peri Peri Tempeh (part)',kg:Math.min(fk['Peri Peri Tempeh']||27,18),person:'H1 after tempeh',note:'H1 10kg slot',dot:PCOL['Peri Peri Tempeh']},
-      {name:'Peri Peri Sauce',kg:fk['Peri Peri Sauce']||7,person:'H1 spare',note:'1kg per 4kg product',dot:PCOL['Peri Peri Sauce']},
-      {name:'⚙ WW + MG Rolls',kg:0,qty:'75 + 30 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
-      {name:'⚙ Roti',kg:0,qty:'50 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
-    ]},
-    Tue:{color:'#7c6ef7',label:'Tuesday',note:'Tofu + House Sauce + Patty + Momos',items:[
-      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
-      {name:'Peri Peri Tempeh (finish)',kg:Math.max(0,(fk['Peri Peri Tempeh']||27)-18),person:'Shubash',note:'Mon carryover',dot:PCOL['Peri Peri Tempeh']},
-      {name:'Tofu Filling',kg:fk['Tofu Filling']||28,person:'Suneel',note:'',dot:PCOL['Tofu Filling']},
-      {name:'House Sauce',kg:50,person:'Shubash + Suneel',note:'warn-50kg',dot:PCOL['House Sauce']},
-      {name:'Tandoori Patty',kg:fk['Tandoori Patty']||11,person:'H1 after tempeh',note:'H1 10kg slot',dot:PCOL['Tandoori Patty']},
-      {name:'🥟 Momos (Peri Peri + Keema)',kg:0,qty:'100 plates',person:'H1',note:'60g/plate × 100',dot:'#7c6ef7'},
-      {name:'⚙ WW Rolls',kg:0,qty:'75 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
-      {name:'⚙ Roti',kg:0,qty:'50 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
-    ]},
-    Wed:{color:'#00d4a0',label:'Wednesday',note:'Paneer + Makhani + Dispatch AM',items:[
-      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
-      {name:'Paneer Filling',kg:fk['Paneer Filling']||62,person:'Shubash + Suneel',note:(fk['Paneer Filling']||62)>50?'warn-50kg':'',dot:PCOL['Paneer Filling']},
-      {name:'Makhani Sauce',kg:30,person:'H1 + overflow',note:'alongside Paneer day',dot:PCOL['Makhani Sauce']},
-      {name:'⚙ WW + MG Rolls',kg:0,qty:'75 + 30 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
-      {name:'🚚 Dispatch AM',kg:0,qty:'Major items',person:'— fast dispatch',note:'dispatch',dot:'#00d4a0'},
-    ]},
-    Thu:{color:'#f5a623',label:'Thursday',note:'⚠ Jeera Rice ALONE + Lehsuni Paneer',items:[
-      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
-      {name:'⚠ Jeera Rice (ALONE)',kg:fk['Jeera Rice']||66,person:'Shubash + Suneel',note:'jeera-rule',dot:PCOL['Jeera Rice']},
-      {name:'Lehsuni Paneer',kg:fk['Lehsuni Paneer']||15,person:'H1 spare',note:'after tempeh',dot:PCOL['Lehsuni Paneer']},
-      {name:'Paneer Bhurji',kg:fk['Paneer Bhurji']||14,person:'H1',note:'250g packs',dot:PCOL['Paneer Bhurji']},
-      {name:'Tempeh Bhurji',kg:fk['Tempeh Bhurji']||3,person:'H1 spare',note:'250g packs',dot:PCOL['Tempeh Bhurji']},
-      {name:'⚙ MG Rolls (finish)',kg:0,qty:'17 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
-      {name:'⚙ Roti (finish)',kg:0,qty:'52 pcs',person:'Pushkar + Vikas',note:'machine',dot:'#4a9eff'},
-    ]},
-    Fri:{color:'#e85d5d',label:'Friday',note:'Bi-weekly small items + Dispatch AM',items:[
-      {name:'Raw Tempeh (H1)',kg:25,person:'H1',note:'tempeh',dot:'#00d4a0'},
-      {name:'Ghee Roast',kg:fk['Ghee Roast']||12,person:'Suneel',note:'bi-weekly',dot:PCOL['Ghee Roast']},
-      {name:'Masala Tikka',kg:fk['Masala Tikka']||5,person:'Suneel',note:'bi-weekly',dot:PCOL['Masala Tikka']},
-      {name:'Tempeh Lehsuni',kg:fk['Tempeh Lehsuni']||11,person:'Shubash',note:'bi-weekly',dot:PCOL['Tempeh Lehsuni']},
-      {name:'Kung Pao / Desi Chinese',kg:fk['Kung Pao']||18,person:'H1 after tempeh',note:'bi-weekly',dot:PCOL['Kung Pao']},
-      {name:'Fried Rice (part)',kg:Math.min(fk['Fried Rice']||32,16),person:'Shubash',note:'bi-weekly',dot:PCOL['Fried Rice']},
-      {name:'Rajma + Corn Patty',kg:20,person:'Shubash spare',note:'bi-weekly 10+10kg',dot:'#f5a623'},
-      {name:'🚚 Dispatch AM',kg:0,qty:'Jeera Rice + top-up',person:'—',note:'dispatch',dot:'#00d4a0'},
-    ]},
-    Sat:{color:'#8fa8d8',label:'Saturday',note:'Burrito + Pasta Bowl + Dispatch PM',items:[
-      {name:'Raw Tempeh (H1)',kg:20,person:'H1',note:'tempeh half-day',dot:'#00d4a0'},
-      {name:'Burrito Bowl ×6 components',kg:0,qty:'~11 kg each',person:'Suneel + Shubash + H1',note:'bi-weekly',dot:PCOL['Burrito Bowl']},
-      {name:'Pasta Bowl ×5 (Pasta/Broccoli/Corn/Bell Peppers/Olives)',kg:0,qty:'8–14 kg each',person:'Same 3 people',note:'bi-weekly',dot:'#00d4a0'},
-      {name:'Fried Rice (finish)',kg:Math.max(0,(fk['Fried Rice']||32)-16),person:'H1 spare',note:'bi-weekly',dot:PCOL['Fried Rice']},
-      {name:'🤲 Spinach Wraps',kg:0,qty:Math.ceil(S.rolls.Spinach*1.3)+' pcs',person:'Suneel (hand)',note:'hand',dot:'#9d93f9'},
-      {name:'🤲 Beetroot Wraps',kg:0,qty:Math.ceil(S.rolls.Beetroot*1.3)+' pcs',person:'Suneel (hand)',note:'hand',dot:'#9d93f9'},
-      {name:'🚚 Dispatch PM',kg:0,qty:'ALL items',person:'—',note:'dispatch',dot:'#7c6ef7'},
-    ]},
-  };
+  // Freezer storage check: 2 × 80kg = 160kg total, 40kg reserved for raw tempeh = 120kg usable
+  const usableStorage=160-40;// 120kg
+  const storageNote=totalKg>usableStorage?`⚠ Total ${totalKg.toFixed(0)}kg > ${usableStorage}kg usable freezer → need staggered dispatch`:`✓ ${totalKg.toFixed(0)}kg fits in ${usableStorage}kg usable storage`;
 
-  // Person load table
-  const personDays={
-    Pushkar:{Mon:'Rolls+Cooking assist',Tue:'Rolls',Wed:'Rolls',Thu:'Rolls',Fri:'Rolls',Sat:'Rolls+Vikas',total:'~roll machine daily'},
-    Vikas:{Mon:'Roll Machine',Tue:'Roll Machine',Wed:'Roll Machine',Thu:'Roll Machine',Fri:'Roll Machine',Sat:'Roll Machine',total:'roll machine only'},
-    Suneel:{Mon:'Keema assist',Tue:'Tofu 28kg+House Sauce assist',Wed:'Paneer assist',Thu:'Jeera Rice 33kg',Fri:'Ghee Roast 12+Masala 5+Fried Rice 16',Sat:'Burrito+Pasta Bowl+🤲Wraps',total:'~30-35 kg/day'},
-    Shubash:{Mon:'Keema 30kg',Tue:'Peri Peri finish+House Sauce assist',Wed:'Paneer 32kg',Thu:'Jeera Rice 33kg',Fri:'Tempeh Lehsuni 11+Fried Rice+Patties',Sat:'Burrito+Pasta Bowl',total:'~30-35 kg/day'},
-    H1:{Mon:'Tempeh 25kg+Peri Peri 18kg+Sauce',Tue:'Tempeh 25kg+Patty 11kg+Momos',Wed:'Tempeh 25kg+Makhani overflow',Thu:'Tempeh 25kg+Lehsuni+Bhurji',Fri:'Tempeh 25kg+Kung Pao 18kg',Sat:'Tempeh 20kg+Burrito+Fried Rice',total:'Tempeh daily + secondary'},
-  };
-  const colors={Pushkar:'var(--b1)',Vikas:'var(--g)',Suneel:'var(--p1)',Shubash:'var(--a)',H1:'var(--r1)'};
-  $('plbody').innerHTML=Object.entries(personDays).map(([p,d])=>`<tr>
-    <td class="tn" style="color:${colors[p]}">${p}</td>
-    ${DAYS.map(day=>`<td style="font-size:10.5px;color:var(--t2)">${d[day]||'—'}</td>`).join('')}
-    <td class="tc" style="font-size:10px;color:var(--t3)">${d.total}</td>
-  </tr>`).join('');
-
-  // Alerts
+  // ALERTS
   const alerts=[];
-  if((fk['Tempeh Keema']||0)>50)alerts.push({type:'a',msg:`⚠ Tempeh Keema ${(fk['Tempeh Keema']||0).toFixed(0)} kg — Monday: >50 kg rule → Shubash + Suneel both assigned`});
-  if((fk['Paneer Filling']||0)>50)alerts.push({type:'a',msg:`⚠ Paneer Filling ${(fk['Paneer Filling']||0).toFixed(0)} kg — Wednesday: >50 kg rule → 2 people`});
-  if((fk['Jeera Rice']||0)>0)alerts.push({type:'r',msg:`⚠ Jeera Rice ${(fk['Jeera Rice']||0).toFixed(0)} kg on Thursday — ALONE DAY: no Keema, Paneer, or any Tempeh item`});
-  alerts.push({type:'g',msg:`✓ Tempeh requirement: ${tr.toFixed(1)} kg total ÷ 6 days = ${(tr/6).toFixed(1)} kg/day — well within H1's 25 kg/day capacity`});
+  // 3-person check
+  const totalPersonHrs=Object.values(ITEM_CAP).reduce((s,c)=>{
+    const item=Object.keys(ITEM_CAP).find(k=>ITEM_CAP[k]===c);
+    const kg=fk[item]||0;
+    if(!kg)return s;
+    const batches=Math.ceil(kg/c.maxKg);
+    return s+(batches*c.hours)+(batches*c.helpHrs);
+  },0);
+  const availableHrs=FACTORY.totalPeople*FACTORY.workingHoursPerDay*6;// 3 people × 10hrs × 6 days
+  if(totalPersonHrs>availableHrs){
+    const extraPeople=Math.ceil((totalPersonHrs-availableHrs)/(FACTORY.workingHoursPerDay*6));
+    alerts.push({type:'r',msg:`🚨 PERSON SHORTAGE: Estimated ${totalPersonHrs.toFixed(0)} person-hours needed vs ${availableHrs} available (3 people × 6 days). Need ${extraPeople} more person(s).`});
+  }
+  // Max 22kg tempeh per day (not 25kg!)
+  const tempehDailyNeeded=trReg/6;
+  if(tempehDailyNeeded>FACTORY.maxTempehKg){
+    const daysNeeded=Math.ceil(trReg/FACTORY.maxTempehKg);
+    alerts.push({type:'r',msg:`🌿 Regular Tempeh: ${trReg.toFixed(1)}kg total. Max ${FACTORY.maxTempehKg}kg/day → needs ${daysNeeded} days. Schedule H1 accordingly.`});
+  }else{
+    alerts.push({type:'g',msg:`✓ Regular Tempeh: ${trReg.toFixed(1)}kg ÷ ${FACTORY.maxTempehKg}kg/day = ${(trReg/FACTORY.maxTempehKg).toFixed(1)} days — within capacity`});
+  }
+  if(trRajma>0)alerts.push({type:'p',msg:`🫘 Rajma Tempeh: ${trRajma.toFixed(1)}kg required for Rajma Tempeh Patty — schedule separately (Rule 15)`});
+  if(trChickpea>0)alerts.push({type:'p',msg:`🫛 Chickpea Tempeh: ${trChickpea.toFixed(1)}kg required for Chickpea Tempeh Patty — schedule separately (Rule 15)`});
+  // Blast freezer
+  if(blastRounds>0)alerts.push({type:'a',msg:`❄ Blast Freezer: ~${blastKgSmall.toFixed(0)}kg patties/balls (30kg/run) + ${blastKgReg.toFixed(0)}kg regular (50kg/run) = ${blastRounds} freeze rounds × 5 hrs each. Schedule early-shift to start, late-shift to unload.`});
+  // Storage
+  alerts.push({type:totalKg>usableStorage?'a':'g',msg:storageNote});
+  // Cap violations
+  Object.entries(fk).forEach(([item,kg])=>{
+    if(typeof kg!=='number')return;
+    const cap=ITEM_CAP[item];
+    if(!cap||!kg)return;
+    if(kg>cap.maxKg)alerts.push({type:'a',msg:`⚠ ${item}: ${kg.toFixed(0)}kg > max ${cap.maxKg}kg/day — needs ${Math.ceil(kg/cap.maxKg)} production runs`});
+    else if(cap.helpHrs>0&&kg>=cap.maxKg*0.5)alerts.push({type:'a',msg:`⚠ ${item}: ${kg.toFixed(0)}kg — owner needs ${cap.helpHrs}h assist from another person`});
+  });
+  // Packing day next-day
+  const pattyKg=Object.entries(fk).filter(([k])=>k.includes('Patty')).reduce((s,[,v])=>s+(typeof v==='number'?v:0),0);
+  const ballsKg=Object.entries(fk).filter(([k])=>k.includes('Ball')||k.includes('Finger')).reduce((s,[,v])=>s+(typeof v==='number'?v:0),0);
+  if(pattyKg>0)alerts.push({type:'p',msg:`📦 Patty packing (next day after blast freeze): ${Math.ceil(pattyKg/25)} hours needed (1hr per 25kg batch)`});
+  if(ballsKg>0)alerts.push({type:'p',msg:`📦 Balls/Fingers packing (next day): ${Math.ceil(ballsKg/10)} hours needed (1hr per 10kg)`});
+  // Momos
+  alerts.push({type:'p',msg:`🥟 Momos: 1 person = 175 Peri Peri + 175 Keema pcs/day (full day task)`});
+  // Peri Peri Sauce for all peri peri items
+  const ppItemsTotal=(S.res.ppItemsSold||0);
+  if(ppItemsTotal>0)alerts.push({type:'p',msg:`🍅 Peri Peri Sauce: ${(ppItemsTotal*PP_SAUCE_PER_ITEM_G/1000).toFixed(1)}kg for menu items (25g each × ${ppItemsTotal} orders) + production batch`});
   $('prod-alerts').innerHTML=alerts.map(a=>`<div class="alert al-${a.type}">${a.msg}</div>`).join('');
 
-  // Day blocks
-  let html='';
+  // ═══ PERSON LOAD TABLE ═══
+  // Week 1: Zero stock. Week 2: Running.
+  const wk=currentProdWeek||1;
+  const ppSauceKg=fk['Peri Peri Sauce']||8;
+  const keemaKg=fk['Tempeh Keema']||56;
+  const ppTempKg=fk['Peri Peri Tempeh']||27;
+  const tofuKg=fk['Tofu Filling']||28;
+  const paneerKg=fk['Paneer Filling']||62;
+  const jrKg=fk['Jeera Rice']||33;
+  const lehsuniKg=fk['Lehsuni Paneer']||15;
+  const pbhurjiKg=fk['Paneer Bhurji']||14;
+  const tbhurjiKg=fk['Tempeh Bhurji']||3;
+  const gheeKg=fk['Ghee Roast']||12;
+  const masalaKg=fk['Masala Tikka']||5;
+  const tlehKg=fk['Tempeh Lehsuni']||11;
+  const kpKg=fk['Kung Pao']||18;
+  const friKg=fk['Fried Rice']||32;
+  const tandKg=fk['Tandoori Patty']||11;
+
+  // People: Suneel (Person A), Shubash (Person B), H1 (Person C — tempeh)
+  // Pushkar = Roll machine (not counted in cooking)
+  // IMPORTANT: 3 people total. Roll machine = Pushkar (separate)
+  const personDays=wk===1?{
+    Pushkar:{Mon:'⚙ Roll machine (WW+MG+Roti)',Tue:'⚙ Roll machine',Wed:'⚙ Roll machine',Thu:'⚙ Roll machine',Fri:'⚙ Roll machine',Sat:'⚙ Roll machine + 🤲 Hand wraps',total:'Roll machine daily'},
+    Suneel:{Mon:`Peri Peri Sauce ${ppSauceKg.toFixed(0)}kg (day before PP Tempeh)`,Tue:`Peri Peri Tempeh ${ppTempKg.toFixed(0)}kg${needsAssist('Peri Peri Tempeh',ppTempKg)?' + H1 assist 4h':''}`,Wed:`Paneer ${paneerKg.toFixed(0)}kg${needsAssist('Paneer Filling',paneerKg)?' + H1 assist 3h':''}`,Thu:`Jeera Rice ${jrKg.toFixed(0)}kg ALONE`,Fri:`Ghee Roast ${gheeKg.toFixed(0)}kg + Masala Tikka ${masalaKg.toFixed(0)}kg`,Sat:`Burrito Bowl ×6 + Oatmeal`,total:'Main cook · 30-40kg/day'},
+    Shubash:{Mon:`Paneer Filling ${paneerKg.toFixed(0)}kg (batch 1 — no tempeh stock)`,Tue:`Tofu Filling ${tofuKg.toFixed(0)}kg${needsAssist('Tofu Filling',tofuKg)?' + 4h assist':''}`,Wed:`Paneer Filling (continue if needed) + Makhani 35kg`,Thu:`Lehsuni ${lehsuniKg.toFixed(0)}kg + Paneer Bhurji ${pbhurjiKg.toFixed(0)}kg`,Fri:`Tempeh Lehsuni ${tlehKg.toFixed(0)}kg + Kung Pao ${kpKg.toFixed(0)}kg`,Sat:`Burrito Bowl + Pasta Bowl`,total:'Main cook · 30-40kg/day'},
+    H1:{Mon:`🌿 Tempeh (22kg max, 6h) + free 2h → Peri Peri Sauce prep`,Tue:`🌿 Tempeh 22kg + Tempeh Keema ${Math.min(keemaKg,60).toFixed(0)}kg (Tue stock ready)`,Wed:`🌿 Tempeh 22kg + Paneer assist 3h`,Thu:`🌿 Tempeh 22kg + Tempeh Bhurji ${tbhurjiKg.toFixed(0)}kg`,Fri:`🌿 Tempeh 22kg + Fried Rice ${Math.min(friKg,40).toFixed(0)}kg`,Sat:`🌿 Tempeh 15kg (half) + Pasta Bowl`,total:'Tempeh 22kg/day + secondary task'},
+  }:{
+    Pushkar:{Mon:'⚙ Roll machine',Tue:'⚙ Roll machine',Wed:'⚙ Roll machine',Thu:'⚙ Roll machine',Fri:'⚙ Roll machine',Sat:'⚙ Roll machine + 🤲 Hand wraps',total:'Roll machine daily'},
+    Suneel:{Mon:`Peri Peri Sauce ${ppSauceKg.toFixed(0)}kg (for Wed PP Tempeh)`,Tue:`Tempeh Keema ${keemaKg.toFixed(0)}kg${keemaKg>60?' 🚨 OVER CAP: needs 2 runs':needsAssist('Tempeh Keema',keemaKg)?' + 3.5h assist':''}`,Wed:`Peri Peri Tempeh ${ppTempKg.toFixed(0)}kg${needsAssist('Peri Peri Tempeh',ppTempKg)?' + 4h assist':''}`,Thu:`Jeera Rice ${jrKg.toFixed(0)}kg ALONE (max 40kg, 5h)`,Fri:`Ghee Roast ${gheeKg.toFixed(0)}kg + Masala Tikka ${masalaKg.toFixed(0)}kg`,Sat:`Burrito Bowl ×6`,total:'Main cook · 30-60kg/day'},
+    Shubash:{Mon:`Paneer Filling ${paneerKg.toFixed(0)}kg${needsAssist('Paneer Filling',paneerKg)?' + 3h assist':''}`,Tue:`Tofu Filling ${tofuKg.toFixed(0)}kg${needsAssist('Tofu Filling',tofuKg)?' + 4h assist':''} + House Sauce`,Wed:`Makhani 35kg + Lehsuni ${lehsuniKg.toFixed(0)}kg`,Thu:`Paneer Bhurji ${pbhurjiKg.toFixed(0)}kg + Temp Bhurji`,Fri:`Tempeh Lehsuni ${tlehKg.toFixed(0)}kg + Kung Pao ${kpKg.toFixed(0)}kg`,Sat:`Burrito Bowl + Pasta Bowl`,total:'Main cook · 30-60kg/day'},
+    H1:{Mon:`🌿 Tempeh 22kg (6h) + 2h free → Peri Peri Sauce assist`,Tue:`🌿 Tempeh 22kg + Tandoori Patty ${tandKg.toFixed(0)}kg + Momos`,Wed:`🌿 Tempeh 22kg + Peri Peri Tempeh assist (4h)`,Thu:`🌿 Tempeh 22kg + Tempeh Bhurji ${tbhurjiKg.toFixed(0)}kg`,Fri:`🌿 Tempeh 22kg + Fried Rice ${Math.min(friKg,40).toFixed(0)}kg (max 40kg rule)`,Sat:`🌿 Tempeh 15kg + Pasta Bowl + Packing patties`,total:'Tempeh 22kg/day (max) + secondary'},
+  };
+  const colors={Pushkar:'var(--b1)',Suneel:'var(--p1)',Shubash:'var(--a)',H1:'var(--r1)'};
+  $('plbody').innerHTML=Object.entries(personDays).map(([p,d])=>`<tr>
+    <td class="tn" style="color:${colors[p]};font-weight:700">${p}</td>
+    ${DAYS.map(day=>`<td style="font-size:10px;color:var(--t2);line-height:1.3">${d[day]||'—'}</td>`).join('')}
+    <td class="tc" style="font-size:9.5px;color:var(--t3)">${d.total}</td>
+  </tr>`).join('');
+
+  // ═══ WEEK TABS ═══
+  const fkKeema=fk['Tempeh Keema']||56;
+  const schedule=wk===1?buildWeek1Schedule(fk):buildWeek2Schedule(fk);
+  let schedHtml='';
   for(const day of DAYS){
-    const d=schedule[day];
+    const d=schedule[day];if(!d)continue;
     const cookKg=d.items.filter(x=>x.kg>0).reduce((s,x)=>s+x.kg,0);
     const pct=Math.min(100,Math.round(cookKg/130*100));
     const pctCol=pct>90?'#e85d5d':pct>70?'#f5a623':'#00d4a0';
-    html+=`<div class="day-block">
+    schedHtml+=`<div class="day-block">
       <div class="day-hdr" style="border-left:3px solid ${d.color}">
         <div class="day-name" style="color:${d.color}">${d.label}</div>
         <div class="day-stats">
@@ -825,27 +981,180 @@ function renderProduction(){
       </div>
       <div style="font-size:10.5px;color:var(--t3);padding:5px 16px 0;font-style:italic">${d.note}</div>`;
     d.items.forEach(it=>{
-      const kgStr=it.kg>0?`${it.kg} kg`:it.qty||'';
+      const kgStr=it.kg>0?`${it.kg.toFixed(1)} kg`:it.qty||'';
+      const cap=ITEM_CAP[it.name];
+      const capW=cap&&it.kg>cap.maxKg?`<span class="prod-note note-warn">🚨 OVER MAX ${cap.maxKg}kg</span>`:
+                 cap&&cap.helpHrs>0&&it.kg>=cap.maxKg*0.5?`<span class="prod-note note-warn">⚠ needs ${cap.helpHrs}h assist</span>`:'';
+      const freezeNote=cap&&cap.blastFreeze?`<span class="prod-note note-machine">❄ blast freeze</span>`:'';
+      const packNote=cap&&cap.packNextDay?`<span class="prod-note note-ok">📦 pack next day</span>`:'';
       let noteHtml='';
       if(it.note==='machine')noteHtml=`<span class="prod-note note-machine">⚙ machine</span>`;
-      else if(it.note==='hand')noteHtml=`<span class="prod-note note-hand">🤲 hand</span>`;
+      else if(it.note==='hand')noteHtml=`<span class="prod-note note-hand">🤲 max 100/person</span>`;
       else if(it.note==='dispatch')noteHtml=`<span class="prod-note note-disp">🚚 dispatch</span>`;
-      else if(it.note==='bi-weekly')noteHtml=`<span class="prod-note note-bi">bi-weekly</span>`;
-      else if(it.note==='jeera-rule')noteHtml=`<span class="prod-note note-warn">⚠ NO Tempeh/Paneer/Keema today</span>`;
-      else if(it.note==='warn-50kg')noteHtml=`<span class="prod-note note-warn">⚠ >50 kg: 2 people</span>`;
+      else if(it.note==='biw')noteHtml=`<span class="prod-note note-bi">bi-weekly 2×</span>`;
+      else if(it.note==='tempeh')noteHtml=`<span class="prod-note note-ok">🌿 max 22kg · 6h</span>`;
+      else if(it.note==='tempeh-rajma')noteHtml=`<span class="prod-note note-ok">🫘 Rajma Tempeh</span>`;
+      else if(it.note==='tempeh-chickpea')noteHtml=`<span class="prod-note note-ok">🫛 Chickpea Tempeh</span>`;
+      else if(it.note==='zero')noteHtml=`<span class="prod-note note-warn">⚠ ZERO STOCK</span>`;
+      else if(it.note==='sauce')noteHtml=`<span class="prod-note note-ok">🍅 sauce first</span>`;
+      else if(it.note==='jeera')noteHtml=`<span class="prod-note note-warn">⚠ ALONE · max 40kg</span>`;
       else if(it.note)noteHtml=`<span class="prod-note note-ok">${it.note}</span>`;
-      html+=`<div class="prod-row">
+      schedHtml+=`<div class="prod-row">
         <div class="prod-dot" style="background:${it.dot}"></div>
         <div class="prod-name">${it.name}</div>
         <div class="prod-kg" style="color:${it.dot}">${kgStr}</div>
-        <div>${noteHtml}</div>
+        <div>${noteHtml}${capW}${freezeNote}${packNote}</div>
         <div class="prod-person">${it.person}</div>
       </div>`;
     });
-    html+='</div>';
+    schedHtml+='</div>';
   }
-  $('prod-days').innerHTML=html;
+  $('prod-days').innerHTML=schedHtml;
 }
+
+function buildWeek1Schedule(fk){
+  const ppSKg=fk['Peri Peri Sauce']||8;
+  const keemaKg=fk['Tempeh Keema']||56;
+  const ppKg=fk['Peri Peri Tempeh']||27;
+  const tofuKg=fk['Tofu Filling']||28;
+  const paneerKg=fk['Paneer Filling']||62;
+  const jrKg=Math.min(fk['Jeera Rice']||33,40);// max 40kg, 1 person, 5hrs
+  const lehKg=fk['Lehsuni Paneer']||15;
+  const pbKg=fk['Paneer Bhurji']||14;
+  const tbKg=fk['Tempeh Bhurji']||3;
+  const gheeKg=fk['Ghee Roast']||12;
+  const masalaKg=fk['Masala Tikka']||5;
+  const tlehKg=fk['Tempeh Lehsuni']||11;
+  const kpKg=fk['Kung Pao']||18;
+  const friKg=Math.min(fk['Fried Rice']||32,40);
+  const tandKg=fk['Tandoori Patty']||11;
+  const C=PCOL;
+  return {
+    Mon:{color:'#4a9eff',label:'Monday — Week 1',note:'⚠ ZERO tempeh stock. Non-tempeh items only. H1 starts tempeh batch. Peri Peri Sauce for tomorrow.',items:[
+      {name:'🌿 Regular Tempeh Batch 1 (max 22kg)',kg:22,person:'H1 — 6h total, 2h free at start',note:'tempeh',dot:'#00d4a0'},
+      {name:'⚠ Rajma Tempeh Batch 1',kg:Math.min(fk['Rajma Tempeh Patty']||5,22)*0.3,person:'H1 (2h free slot) — separate batch',note:'tempeh-rajma',dot:'#f5a623'},
+      {name:'Peri Peri Sauce (for Tue)',kg:ppSKg,person:'Suneel — must be made before Peri Peri Tempeh',note:'sauce',dot:C['Peri Peri Sauce']||'#9d93f9'},
+      {name:'Paneer Filling (no tempeh needed)',kg:Math.min(paneerKg,60),person:'Shubash — owner, 60kg max/10hr',note:'',dot:C['Paneer Filling']||'#00d4a0'},
+      {name:'⚙ WW + MG Rolls',kg:0,qty:'',person:'Pushkar — roll machine',note:'machine',dot:'#4a9eff'},
+    ]},
+    Tue:{color:'#7c6ef7',label:'Tuesday — Week 1',note:'Tempeh from Mon ready. First tempeh items. Peri Peri (sauce from Mon). H1 free 2h → Rajma/Chickpea tempeh.',items:[
+      {name:'🌿 Regular Tempeh Batch 2 (22kg)',kg:22,person:'H1 — 6h, 2h free → Tofu Balls/Tempeh Balls',note:'tempeh',dot:'#00d4a0'},
+      {name:'🫘 Rajma Tempeh Batch 2',kg:Math.min((fk['Rajma Tempeh Patty']||5)*0.3,22),person:'H1 (2h free slot — boiling phase)',note:'tempeh-rajma',dot:'#f5a623'},
+      {name:'Peri Peri Tempeh (sauce ✓)',kg:Math.min(ppKg,60),person:'Suneel — owner, +4h assist needed',note:'',dot:C['Peri Peri Tempeh']||'#9d93f9'},
+      {name:'Tofu Filling',kg:Math.min(tofuKg,50),person:'Shubash — owner, 50kg max',note:'',dot:C['Tofu Filling']||'#4a9eff'},
+      {name:'Tempeh Keema (Mon tempeh batch)',kg:Math.min(keemaKg,60),person:'H1 after tempeh — uses Mon tempeh',note:'42% tempeh',dot:C['Tempeh Keema']||'#7c6ef7'},
+      {name:'⚙ WW Rolls',kg:0,qty:'',person:'Pushkar',note:'machine',dot:'#4a9eff'},
+    ]},
+    Wed:{color:'#00d4a0',label:'Wednesday — Week 1 + 🚚 DISPATCH AM',note:'❄ Blast freeze Mon items (50kg/run, 5hrs). Paneer + Makhani. Packing next-day patties.',items:[
+      {name:'🌿 Regular Tempeh Batch 3 (22kg)',kg:22,person:'H1 — 6h, 2h free',note:'tempeh',dot:'#00d4a0'},
+      {name:'Paneer Filling',kg:Math.min(paneerKg,60),person:'Shubash — 60kg max, +3h assist',note:'',dot:C['Paneer Filling']||'#00d4a0'},
+      {name:'Makhani Sauce (~35kg)',kg:35,person:'Suneel — concurrent with Paneer',note:'',dot:C['Makhani Sauce']||'#ff7b7b'},
+      {name:'❄ Blast Freeze (Mon items, 5hrs)',kg:0,qty:`50kg/run · shift 1 loads, shift 2 unloads`,person:'Early + Late shift handoff',note:'machine',dot:'#4a9eff'},
+      {name:'📦 Pack yesterday\'s Patties',kg:0,qty:'1hr per 25kg batch',person:'H1 after tempeh — pack Mon patties',note:'',dot:'#f5a623'},
+      {name:'🚚 Dispatch AM',kg:0,qty:'Paneer · Tofu · Lehsuni (Mon+Tue)',person:'—',note:'dispatch',dot:'#00d4a0'},
+    ]},
+    Thu:{color:'#f5a623',label:'Thursday — Week 1',note:'⚠ Jeera Rice = ALONE, max 40kg, 5hr (Rule). Bhurji items. Balls packing if needed.',items:[
+      {name:'🌿 Regular Tempeh Batch 4 (22kg)',kg:22,person:'H1 — 6h, 2h free → Tempeh Balls',note:'tempeh',dot:'#00d4a0'},
+      {name:'⚠ Jeera Rice (ALONE — max 40kg, 5hr)',kg:jrKg,person:'Suneel — 1 person only, 5hr max',note:'jeera',dot:C['Jeera Rice']||'#f5a623'},
+      {name:'Paneer Bhurji',kg:Math.min(pbKg,50),person:'Shubash — 50kg max',note:'',dot:C['Paneer Bhurji']||'#4a9eff'},
+      {name:'Tempeh Bhurji',kg:Math.min(tbKg,60),person:'H1 after tempeh (39% tempeh)',note:'',dot:'#7c6ef7'},
+      {name:'Lehsuni Paneer',kg:Math.min(lehKg,50),person:'Shubash (after Bhurji)',note:'',dot:C['Lehsuni Paneer']||'#00c9b8'},
+      {name:'⚙ Roti + MG Rolls',kg:0,qty:'',person:'Pushkar',note:'machine',dot:'#4a9eff'},
+    ]},
+    Fri:{color:'#e85d5d',label:'Friday — Week 1 · Bi-weekly (2×) + 🚚 DISPATCH AM',note:'Ghee Roast · Masala Tikka · Tempeh Lehsuni · Kung Pao · Fried Rice (all bi-weekly 2× stock)',items:[
+      {name:'🌿 Regular Tempeh Batch 5 (22kg)',kg:22,person:'H1 — 6h, 2h free → Chickpea Tempeh',note:'tempeh',dot:'#00d4a0'},
+      {name:'🫛 Chickpea Tempeh Batch',kg:Math.min((fk['Chickpea Tempeh Patty']||5)*0.3,22),person:'H1 (2h free — boiling phase)',note:'tempeh-chickpea',dot:'#9d93f9'},
+      {name:`Ghee Roast (bi-w 2×, ${gheeKg.toFixed(0)}kg)`,kg:Math.min(gheeKg,50),person:'Suneel — 50kg max, +3h assist',note:'biw',dot:C['Ghee Roast']||'#f5a623'},
+      {name:`Masala Tikka (bi-w 2×, ${masalaKg.toFixed(0)}kg, max 40kg)`,kg:Math.min(masalaKg,40),person:'Shubash — 40kg max, +4h assist',note:'biw',dot:C['Masala Tikka']||'#e85d5d'},
+      {name:`Tempeh Lehsuni (bi-w 2×, ${tlehKg.toFixed(0)}kg)`,kg:Math.min(tlehKg,50),person:'Shubash (32% tempeh)',note:'biw',dot:C['Tempeh Lehsuni']||'#9d93f9'},
+      {name:`Kung Pao (bi-w 2×, ${kpKg.toFixed(0)}kg)`,kg:Math.min(kpKg,50),person:'H1 after tempeh (23% tempeh)',note:'biw',dot:C['Kung Pao']||'#4a9eff'},
+      {name:`Fried Rice (bi-w, max 40kg, 6hr)`,kg:friKg,person:'Suneel — 1 person, max 40kg',note:'biw',dot:C['Fried Rice']||'#00d4a0'},
+      {name:'🚚 Dispatch AM',kg:0,qty:'Keema · Peri Peri · Jeera Rice + top-ups',person:'—',note:'dispatch',dot:'#00d4a0'},
+    ]},
+    Sat:{color:'#8fa8d8',label:'Saturday — Week 1 · BURRITO BOWL + 🚚 DISPATCH PM (7-day)',note:'Rule 13: Burrito Bowl day (6 items, 3 ppl+4th 5h). Patties + Balls. 7-day stock dispatch.',items:[
+      {name:'🌿 Regular Tempeh Batch 6 (15kg half-day)',kg:15,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:'Burrito Bowl ×6 (Red Rajma·Pinto·Corn Salsa·Pico·Fajita·Sour Cream)',kg:0,qty:'3 ppl + 4th 5h',person:'Suneel + Shubash + H1 after tempeh',note:'biw',dot:'#7c6ef7'},
+      {name:'Oatmeal (same day as Burrito Bowl)',kg:20,person:'H1 spare (mixing only)',note:'',dot:'#4a9eff'},
+      {name:'Tandoori Patty',kg:Math.min(tandKg,25),person:'H1 — 25kg max, blast freeze',note:'biw',dot:C['Tandoori Patty']||'#f5a623'},
+      {name:'❄ Blast Freeze Patties (30kg/run, 5hrs)',kg:0,qty:`${Math.ceil(tandKg/30)} runs`,person:'Early shift → Late shift handoff',note:'machine',dot:'#4a9eff'},
+      {name:'🤲 Spinach + Beetroot Wraps',kg:0,qty:'max 100/person (Rule 12)',person:'Pushkar (hand) — post-machine',note:'hand',dot:'#9d93f9'},
+      {name:'🚚 DISPATCH PM (ALL items — 7-day stock)',kg:0,qty:'Lasts till next Saturday dispatch',person:'—',note:'dispatch',dot:'#7c6ef7'},
+    ]},
+  };
+}
+
+function buildWeek2Schedule(fk){
+  const ppSKg=fk['Peri Peri Sauce']||8;
+  const keemaKg=fk['Tempeh Keema']||56;
+  const ppKg=fk['Peri Peri Tempeh']||27;
+  const tofuKg=fk['Tofu Filling']||28;
+  const paneerKg=fk['Paneer Filling']||62;
+  const jrKg=Math.min(fk['Jeera Rice']||33,40);
+  const lehKg=fk['Lehsuni Paneer']||15;
+  const pbKg=fk['Paneer Bhurji']||14;
+  const tbKg=fk['Tempeh Bhurji']||3;
+  const gheeKg=fk['Ghee Roast']||12;
+  const masalaKg=fk['Masala Tikka']||5;
+  const tlehKg=fk['Tempeh Lehsuni']||11;
+  const kpKg=fk['Kung Pao']||18;
+  const friKg=Math.min(fk['Fried Rice']||32,40);
+  const tandKg=fk['Tandoori Patty']||11;
+  const C=PCOL;
+  return {
+    Mon:{color:'#4a9eff',label:'Monday — Week 2',note:'Running production. Peri Peri Sauce today for Wed. H1 free 2h = Rajma Tempeh batch.',items:[
+      {name:'🌿 Regular Tempeh (22kg max)',kg:22,person:'H1 — 6h, 2h free',note:'tempeh',dot:'#00d4a0'},
+      {name:'🫘 Rajma Tempeh (2h free slot)',kg:Math.min((fk['Rajma Tempeh Patty']||5)*0.3,22),person:'H1 during tempeh boiling phase',note:'tempeh-rajma',dot:'#f5a623'},
+      {name:'Peri Peri Sauce (for Wed Peri Peri)',kg:ppSKg,person:'Suneel — 35kg max capacity',note:'sauce',dot:'#9d93f9'},
+      {name:'Paneer Filling',kg:Math.min(paneerKg,60),person:'Shubash — owner 60kg max, +3h assist',note:'',dot:C['Paneer Filling']||'#00d4a0'},
+      {name:'House Sauce (60kg max, 5hr)',kg:Math.min(fk['House Sauce']||50,60),person:'H1 after tempeh (3pm slot)',note:'',dot:'#e85d5d'},
+      {name:'⚙ WW + MG Rolls',kg:0,qty:'',person:'Pushkar — machine',note:'machine',dot:'#4a9eff'},
+    ]},
+    Tue:{color:'#7c6ef7',label:'Tuesday — Week 2',note:'Tempeh Keema (main). Tofu Filling. Blast freeze Mon items. Tandoori Patty + Momos.',items:[
+      {name:'🌿 Regular Tempeh (22kg max)',kg:22,person:'H1 — 6h, 2h free → Tempeh Balls',note:'tempeh',dot:'#00d4a0'},
+      {name:'🫛 Chickpea Tempeh (2h free slot)',kg:Math.min((fk['Chickpea Tempeh Patty']||5)*0.3,22),person:'H1 during boiling phase',note:'tempeh-chickpea',dot:'#9d93f9'},
+      {name:`Tempeh Keema (${keemaKg.toFixed(0)}kg, 42%)`,kg:Math.min(keemaKg,60),person:`Suneel — owner${keemaKg>30?' + 3.5h assist':''}`,note:'',dot:C['Tempeh Keema']||'#7c6ef7'},
+      {name:`Tofu Filling (${tofuKg.toFixed(0)}kg)`,kg:Math.min(tofuKg,50),person:`Shubash — owner${tofuKg>25?' + 4h assist':''}`,note:'',dot:C['Tofu Filling']||'#4a9eff'},
+      {name:'Tandoori Patty (blast freeze → pack Wed)',kg:Math.min(tandKg,25),person:'H1 after tempeh — 25kg max, blast freeze today',note:'biw',dot:C['Tandoori Patty']||'#f5a623'},
+      {name:'🥟 Momos (175 PP + 175 Keema)',kg:0,qty:'1 person full day',person:'H1 (OR add 1 more person — full day task)',note:'',dot:'#7c6ef7'},
+      {name:'❄ Blast Freeze (patties — 30kg/run, 5hr)',kg:0,qty:'',person:'Early shift loads → Late shift unloads',note:'machine',dot:'#4a9eff'},
+      {name:'⚙ Rolls',kg:0,qty:'',person:'Pushkar',note:'machine',dot:'#4a9eff'},
+    ]},
+    Wed:{color:'#00d4a0',label:'Wednesday — Week 2 + 🚚 DISPATCH AM',note:'Peri Peri Tempeh (sauce from Mon). Makhani. Pack Tue patties. Dispatch major items.',items:[
+      {name:'🌿 Regular Tempeh (22kg max)',kg:22,person:'H1 — 6h, 2h free',note:'tempeh',dot:'#00d4a0'},
+      {name:'Peri Peri Tempeh (sauce ✓)',kg:Math.min(ppKg,60),person:`Suneel — owner${ppKg>30?' + 4h assist':''}`,note:'',dot:C['Peri Peri Tempeh']||'#9d93f9'},
+      {name:'Makhani Sauce (~35kg)',kg:35,person:'Shubash',note:'',dot:'#ff7b7b'},
+      {name:'Lehsuni Paneer',kg:Math.min(lehKg,50),person:'H1 after tempeh (3pm)',note:'',dot:C['Lehsuni Paneer']||'#00c9b8'},
+      {name:'📦 Pack Tue Patties (1hr/25kg)',kg:0,qty:`${Math.ceil(tandKg/25)} hrs`,person:'H1 — day after blast freeze',note:'',dot:'#f5a623'},
+      {name:'❄ Blast Freeze regular items (50kg/run, 5hr)',kg:0,qty:'',person:'Shift handoff',note:'machine',dot:'#4a9eff'},
+      {name:'🚚 Dispatch AM',kg:0,qty:'Keema · Paneer · Peri Peri · Tofu',person:'3-4 day coverage',note:'dispatch',dot:'#00d4a0'},
+    ]},
+    Thu:{color:'#f5a623',label:'Thursday — Week 2',note:'Jeera Rice ALONE (max 40kg). Bhurji items. Kung Pao. Blast freeze check.',items:[
+      {name:'🌿 Regular Tempeh (22kg max)',kg:22,person:'H1 — 6h, 2h free',note:'tempeh',dot:'#00d4a0'},
+      {name:'⚠ Jeera Rice ALONE (max 40kg, 5hr)',kg:jrKg,person:'Suneel — 1 person only max 40kg/5hr',note:'jeera',dot:C['Jeera Rice']||'#f5a623'},
+      {name:'Paneer Bhurji',kg:Math.min(pbKg,50),person:'Shubash — 50kg max',note:'',dot:C['Paneer Bhurji']||'#4a9eff'},
+      {name:'Tempeh Bhurji (39% tempeh)',kg:Math.min(tbKg,60),person:'H1 after tempeh (3pm)',note:'',dot:'#7c6ef7'},
+      {name:'Kung Pao (23% tempeh)',kg:Math.min(kpKg,50),person:'H1 concurrent (small qty)',note:'',dot:C['Kung Pao']||'#4a9eff'},
+      {name:'🚚 Dispatch AM',kg:0,qty:'Jeera Rice + top-ups',person:'—',note:'dispatch',dot:'#00d4a0'},
+    ]},
+    Fri:{color:'#e85d5d',label:'Friday — Week 2 · Bi-weekly batch 2',note:'Ghee Roast · Masala Tikka · Tempeh Lehsuni · Fried Rice. Patties pack if needed.',items:[
+      {name:'🌿 Regular Tempeh (22kg max)',kg:22,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:`Ghee Roast (bi-w, ${gheeKg.toFixed(0)}kg)`,kg:Math.min(gheeKg,50),person:'Suneel — 50kg max +3h assist',note:'biw',dot:C['Ghee Roast']||'#f5a623'},
+      {name:`Masala Tikka (bi-w, ${masalaKg.toFixed(0)}kg)`,kg:Math.min(masalaKg,40),person:'Shubash — 40kg max +4h assist',note:'biw',dot:'#e85d5d'},
+      {name:`Tempeh Lehsuni (bi-w, ${tlehKg.toFixed(0)}kg, 32% tempeh)`,kg:Math.min(tlehKg,50),person:'Shubash (after Masala)',note:'biw',dot:'#9d93f9'},
+      {name:`Fried Rice (bi-w, max 40kg, 6hr)`,kg:friKg,person:'Suneel — 1 person, 40kg max/6hr',note:'biw',dot:'#00d4a0'},
+      {name:'Rajma + Chickpea + Corn Patties',kg:Math.min(fk['Rajma Tempeh Patty']||5,25),person:'H1 after tempeh — 25kg max each',note:'biw',dot:'#f5a623'},
+      {name:'❄ Blast Freeze patties (30kg/run)',kg:0,qty:'5hrs per run',person:'Shift handoff',note:'machine',dot:'#4a9eff'},
+    ]},
+    Sat:{color:'#8fa8d8',label:'Saturday — Week 2 · PASTA BOWL + 🚚 DISPATCH PM (7-day)',note:'Rule 13: Pasta Bowl (5 items, 3ppl+4th 5h): Pasta/Broccoli/White Sauce/Pesto/Corn/Bell Peppers/Olives. 7-day dispatch.',items:[
+      {name:'🌿 Regular Tempeh (15kg half-day)',kg:15,person:'H1',note:'tempeh',dot:'#00d4a0'},
+      {name:'Pasta Bowl items (7: Pasta·Broccoli·White Sauce·Pesto·Corn·Bell Peppers·Olives)',kg:0,qty:'3 ppl + 4th 5h',person:'Suneel + Shubash + H1 after tempeh',note:'biw',dot:'#00d4a0'},
+      {name:'📦 Pack Fri Patties/Balls (1hr/25kg + 1hr/10kg)',kg:0,qty:'Packing next day',person:'H1 after tempeh',note:'',dot:'#f5a623'},
+      {name:'🤲 Spinach + Beetroot Wraps',kg:0,qty:'max 100/person',person:'Pushkar (hand)',note:'hand',dot:'#9d93f9'},
+      {name:'🚚 DISPATCH PM (ALL items — 7-day stock)',kg:0,qty:'Lasts till next Saturday',person:'—',note:'dispatch',dot:'#7c6ef7'},
+    ]},
+  };
+}
+
 
 // ════════════════════════════════════════════════════════════
 //  DISPATCH
@@ -1017,7 +1326,30 @@ function renderBread(){
 // ════════════════════════════════════════════════════════════
 function renderPackaging(){
   const fk=S.res.fk;
-  const PSIZE={'Tempeh Keema':800,'Paneer Filling':800,'Peri Peri Tempeh':800,'Tofu Filling':800,'Jeera Rice':800,'Paneer Bhurji':750,'Lehsuni Paneer':750,'Fried Rice':500,'Tempeh Lehsuni':500,'Tempeh Bhurji':500,'Kung Pao':500,'Masala Tikka':500,'Ghee Roast':500,'Chinese Tofu':800,'Tofu Bhurji':500,'Chilli Paneer':500,'Red Rajma':500,'Pinto Beans':500,'Corn Salsa':500,'Pico De Gala':500,'Fajita':500,'Sour Cream':500,'Oatmeal':500,'House Sauce':1000,'Peri Peri Sauce':1000,'Makhani Sauce':1000,'Sweet n Spicy Sauce':250,'Mint Sauce':250,'Tandoori Sauce':250,'Boiled Pasta':500,'Baked Broccoli':500};
+  const PSIZE={
+  // Main fillings
+  'Tempeh Keema':800,'Paneer Filling':800,'Peri Peri Tempeh':800,'Tofu Filling':800,
+  'Jeera Rice':800,'Paneer Bhurji':800,'Lehsuni Paneer':800,'Fried Rice':800,
+  'Tempeh Lehsuni':500,'Tempeh Bhurji':250,'Kung Pao':800,'Masala Tikka':500,
+  'Ghee Roast':500,'Chinese Tofu':800,'Tofu Bhurji':250,'Chilli Paneer':250,
+  'Peri Peri Paneer':250,
+  // Burrito Bowl (500g each)
+  'Red Rajma':500,'Pinto Beans':500,'Corn Salsa':500,'Pico De Gala':500,
+  'Fajita':500,'Sour Cream':500,'Oatmeal':250,
+  // Sauces
+  'House Sauce':1000,'Peri Peri Sauce':1000,'Makhani Sauce':1000,
+  'Sweet n Spicy Sauce':500,'Mint Sauce':500,'Tandoori Sauce':500,
+  // Pasta (500g each, Olives 250g)
+  'Boiled Pasta':500,'Baked Broccoli':500,'White Sauce':500,'Pesto Sauce':500,
+  'Corn (Pasta)':500,'Bell Peppers':500,'Olives':250,
+  // Patties (4 pieces per packet)
+  'Tandoori Patty':'4pcs','Mexican Patty':'4pcs','Corn N Cheese Patty':'4pcs',
+  'Rajma Tempeh Patty':'4pcs','Chickpea Tempeh Patty':'4pcs',
+  // Fingers (10 pieces per packet)
+  'Potato Fingers':'10pcs','Tofu Fingers':'10pcs','Veggie Fingers':'10pcs',
+  // Balls (15 pieces per packet)
+  'Tofu Balls':'15pcs','Tempeh Balls':'15pcs','Veg Balls':'15pcs','Potato Balls':'15pcs',
+};
   function pkts(item,kg){return Math.ceil(kg*1000/((PSIZE[item]||500)*0.85));}
 
   const weekly=['Tempeh Keema','Paneer Filling','Peri Peri Tempeh','Tofu Filling','Jeera Rice','Paneer Bhurji','Lehsuni Paneer','Tempeh Bhurji'];
@@ -1089,17 +1421,26 @@ function renderPackaging(){
 let tempChartInst=null;
 function renderTempeh(){
   const fk=S.res.fk;
-  const total=tempehReq(fk);
-  const daily=total/6;
+  const total=tempehReqAll(fk);
+  const trReg=tempehReq(fk,'regular');
+  const trRajma=tempehReq(fk,'rajma');
+  const trChickpea=tempehReq(fk,'chickpea');
+  const daily=trReg/6;// regular tempeh split over 6 days
   $('t-total').textContent=total.toFixed(1)+' kg';
   $('t-daily').textContent=daily.toFixed(1)+' kg/day';
-  $('t-spare').textContent=(25-daily).toFixed(1)+' kg/day';
+  $('t-spare').textContent=Math.max(0,FACTORY.maxTempehKg-daily).toFixed(1)+' kg/day';
+  // Update type cards
+  if($('t-reg'))$('t-reg').textContent=trReg.toFixed(1)+' kg';
+  if($('t-raj'))$('t-raj').textContent=trRajma.toFixed(1)+' kg · schedule separately';
+  if($('t-chi'))$('t-chi').textContent=trChickpea.toFixed(1)+' kg · schedule separately';
   const maxKg=Math.max(...TEMPEH_ITEMS.map(k=>fk[k]||0));
   const barCols={default:'var(--p)','Peri Peri Tempeh':'var(--p1)','Kung Pao':'var(--b)','Ghee Roast':'var(--a)','Tandoori Patty':'var(--a1)','Masala Tikka':'var(--r1)','Tempeh Bhurji':'var(--p1)'};
   $('tbars').innerHTML=TEMPEH_ITEMS.map(item=>{
     const kg=fk[item]||0;if(kg===0)return'';
-    const pct=Math.round(kg/maxKg*100),col=barCols[item]||barCols.default;
-    return `<div class="tb-row"><div class="tb-name">${item}</div><div class="tb-bar"><div class="tb-fill" style="width:${pct}%;background:${col}"></div></div><div class="tb-val">${kg.toFixed(1)} kg</div><div class="tb-raw">→ ${(kg*0.42).toFixed(1)} kg</div></div>`;
+    const pct=TEMPEH_PCT[item]||0.42;
+    const pctBar=Math.round(kg/maxKg*100),col=barCols[item]||barCols.default;
+    const type=TEMPEH_TYPES.rajma.includes(item)?'🫘 Rajma':TEMPEH_TYPES.chickpea.includes(item)?'🫛 Chickpea':'🌿 Regular';
+    return `<div class="tb-row"><div class="tb-name">${item} <span style="font-size:9px;color:var(--t3)">${type}</span></div><div class="tb-bar"><div class="tb-fill" style="width:${pctBar}%;background:${col}"></div></div><div class="tb-val">${kg.toFixed(1)} kg</div><div class="tb-raw">→ ${(kg*pct).toFixed(1)} kg raw (${Math.round(pct*100)}%)</div></div>`;
   }).join('');
   initTempehChart();
 }
